@@ -1,0 +1,249 @@
+:root {
+  /* Primary colors - Easy to customize */
+  --nav-bg: rgba(30, 33, 57, 0.95);
+  --nav-accent: #64ffda;
+  --nav-text: rgba(255, 255, 255, 0.7);
+  --nav-text-active: #ffffff;
+  --nav-indicator-bg: rgba(100, 255, 218, 0.15);
+  
+  /* Spacing */
+  --nav-height: 70px;
+  --nav-padding: 1.5rem;
+  --nav-item-spacing: 2rem;
+  
+  /* Animation */
+  --nav-transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Modern Navbar Container */
+.navbar-modern {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--nav-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+  z-index: 1000;
+  padding: 0 var(--nav-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo/Brand */
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--nav-text-active);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: var(--nav-transition);
+}
+
+.navbar-brand:hover {
+  color: var(--nav-accent);
+  transform: translateX(5px);
+}
+
+.navbar-brand .brand-icon {
+  font-size: 1.75rem;
+}
+
+/* Navigation Menu */
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  height: 100%;
+}
+
+/* Navigation Items */
+.nav-item {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.nav-item a {
+  color: var(--nav-text);
+  text-decoration: none;
+  padding: 0 var(--nav-item-spacing);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: var(--nav-transition);
+  position: relative;
+}
+
+.nav-item a:hover {
+  color: var(--nav-text-active);
+}
+
+.nav-item.active a {
+  color: var(--nav-accent);
+}
+
+/* Animated Indicator - Pure CSS */
+.nav-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  background: var(--nav-accent);
+  transition: var(--nav-transition);
+  border-radius: 3px 3px 0 0;
+}
+
+/* Position indicator based on active item using CSS only */
+.navbar-menu .nav-item:nth-child(1).active ~ .nav-indicator {
+  left: 0;
+  width: calc(100% / 5); /* Adjust based on number of items */
+}
+
+.navbar-menu .nav-item:nth-child(2).active ~ .nav-indicator {
+  left: calc(100% / 5);
+  width: calc(100% / 5);
+}
+
+.navbar-menu .nav-item:nth-child(3).active ~ .nav-indicator {
+  left: calc(100% / 5 * 2);
+  width: calc(100% / 5);
+}
+
+.navbar-menu .nav-item:nth-child(4).active ~ .nav-indicator {
+  left: calc(100% / 5 * 3);
+  width: calc(100% / 5);
+}
+
+.navbar-menu .nav-item:nth-child(5).active ~ .nav-indicator {
+  left: calc(100% / 5 * 4);
+  width: calc(100% / 5);
+}
+
+/* Advanced hover effect */
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 100%;
+  background: var(--nav-indicator-bg);
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+  z-index: -1;
+  border-radius: 8px;
+}
+
+.nav-item:hover::before {
+  width: calc(100% - 1rem);
+}
+
+.nav-item.active::before {
+  width: calc(100% - 1rem);
+  background: var(--nav-indicator-bg);
+}
+
+/* Mobile Toggle */
+.navbar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--nav-text-active);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: var(--nav-transition);
+}
+
+.navbar-toggle:hover {
+  color: var(--nav-accent);
+  transform: rotate(90deg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-modern {
+    padding: 0 1rem;
+  }
+  
+  .navbar-toggle {
+    display: block;
+  }
+  
+  .navbar-menu {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    background: var(--nav-bg);
+    flex-direction: column;
+    padding: 1rem 0;
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: var(--nav-transition);
+    height: auto;
+    border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+  }
+  
+  .navbar-menu.active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  
+  .nav-item {
+    width: 100%;
+    height: auto;
+  }
+  
+  .nav-item a {
+    width: 100%;
+    padding: 1rem 2rem;
+    height: auto;
+  }
+  
+  .nav-indicator {
+    display: none;
+  }
+  
+  .nav-item::before {
+    display: none;
+  }
+  
+  .nav-item.active {
+    background: var(--nav-indicator-bg);
+  }
+}
+
+/* Cool glow effect on scroll */
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(100, 255, 218, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.4), 0 0 30px rgba(100, 255, 218, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(100, 255, 218, 0.2);
+  }
+}
+
+.navbar-modern.scrolled {
+  animation: glow 2s ease-in-out infinite;
+  background: rgba(30, 33, 57, 0.98);
+}
+
+/* Page offset for fixed navbar */
+body {
+  padding-top: var(--nav-height);
+}

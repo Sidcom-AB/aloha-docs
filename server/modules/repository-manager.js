@@ -1,4 +1,5 @@
 import { GitHubLoader } from './github-loader.js';
+import { AutoDiscovery } from './auto-discovery.js';
 import { TokenManager } from './token-manager.js';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -118,10 +119,10 @@ export class RepositoryManager {
   async validateRepository(repo) {
     const { owner, repo: repoName, branch, path: basePath } = repo.github;
     
-    // Create a loader with the repo's specific token if it has one
-    const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
+    // Use auto-discovery instead of looking for table_of_contents
+    const discovery = new AutoDiscovery(repo.token);
     
-    const validation = await loader.validateRepository(
+    const validation = await discovery.validateRepository(
       owner, 
       repoName, 
       branch, 
@@ -129,7 +130,8 @@ export class RepositoryManager {
     );
 
     if (validation.valid) {
-      repo.tableOfContents = validation.tableOfContents;
+      repo.structure = validation.structure;
+      repo.metadata = validation.metadata;
       repo.validated = true;
     } else {
       repo.validated = false;

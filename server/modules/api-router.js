@@ -129,7 +129,8 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
         description: repo.description,
         url: repo.url,
         validated: repo.validated,
-        tableOfContents: repo.tableOfContents,
+        structure: repo.structure,
+        metadata: repo.metadata,
         children: Array.from(repo.children.keys())
       });
     } catch (error) {

@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "title": "Aloha Framework Documentation",
+  "description": "Component library with AI-first documentation",
+  "logo": "assets/logo.png",
+  "categories": {
+    "content": {
+      "title": "Getting Started",
+      "order": 1,
+      "icon": "🚀"
+    },
+    "schemas": {
+      "title": "Components", 
+      "order": 2,
+      "icon": "🧩"
+    }
+  },
+  "metadata": {
+    "repository": "https://github.com/Sidcom-AB/aloha-docs",
+    "license": "MIT",
+    "author": "Sidcom AB"
+  }
+}

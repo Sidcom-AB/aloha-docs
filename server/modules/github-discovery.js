@@ -1,4 +1,5 @@
 import { GitHubLoader } from './github-loader.js';
+import { AutoDiscovery } from './auto-discovery.js';
 
 export class GitHubDiscovery {
   constructor(githubToken = null) {
@@ -95,8 +96,8 @@ export class GitHubDiscovery {
       }
     }
 
-    // Look for any folder containing table_of_contents.json
-    const searchResult = await this.searchForTableOfContents(parsed);
+    // Look for any folder containing documentation
+    const searchResult = await this.searchForDocumentation(parsed);
     if (searchResult) {
       return searchResult;
     }
@@ -106,38 +107,51 @@ export class GitHubDiscovery {
 
   async validatePath(parsed, path) {
     try {
-      // Check for table_of_contents.json
-      const tocPath = path ? `${path}/table_of_contents.json` : 'table_of_contents.json';
-      const toc = await this.loader.loadFile(
-        parsed.owner, 
-        parsed.repo, 
-        parsed.branch, 
-        tocPath
+      // Use auto-discovery to validate
+      const discovery = new AutoDiscovery(this.loader.token);
+      const result = await discovery.validateRepository(
+        parsed.owner,
+        parsed.repo,
+        parsed.branch,
+        path
       );
 
-      const tableOfContents = JSON.parse(toc);
+      if (result.valid) {
+        return {
+          valid: true,
+          metadata: result.metadata,
+          structure: result.structure
+        };
+      }
       
-      // Extract metadata from TOC
-      const metadata = {
-        title: tableOfContents.title,
-        description: tableOfContents.description,
-        version: tableOfContents.version
-      };
-
-      return {
-        valid: true,
-        metadata,
-        tableOfContents
-      };
+      return { valid: false };
     } catch (error) {
       return { valid: false };
     }
   }
 
-  async searchForTableOfContents(parsed, searchPath = '', depth = 0) {
+  async searchForDocumentation(parsed, searchPath = '', depth = 0) {
     if (depth > 3) return null; // Limit search depth
 
     try {
+      // Use auto-discovery to find documentation
+      const discovery = new AutoDiscovery(this.loader.token);
+      const result = await discovery.validateRepository(
+        parsed.owner,
+        parsed.repo,
+        parsed.branch,
+        searchPath
+      );
+
+      if (result.valid) {
+        return {
+          path: searchPath || 'root',
+          metadata: result.metadata,
+          structure: result.structure
+        };
+      }
+
+      // If not valid at this level, search subdirectories
       const contents = await this.loader.loadDirectory(
         parsed.owner,
         parsed.repo,
@@ -145,25 +159,11 @@ export class GitHubDiscovery {
         searchPath
       );
 
-      // Check current directory for table_of_contents.json
-      const hasToc = contents.some(item => item.name === 'table_of_contents.json');
-      if (hasToc) {
-        const result = await this.validatePath(parsed, searchPath);
-        if (result.valid) {
-          return {
-            path: searchPath || 'root',
-            metadata: result.metadata,
-            tableOfContents: result.tableOfContents
-          };
-        }
-      }
-
-      // Search subdirectories
       for (const item of contents) {
         if (item.type === 'dir' && !item.name.startsWith('.') && !item.name.includes('node_modules')) {
           const subPath = searchPath ? `${searchPath}/${item.name}` : item.name;
-          const result = await this.searchForTableOfContents(parsed, subPath, depth + 1);
-          if (result) return result;
+          const subResult = await this.searchForDocumentation(parsed, subPath, depth + 1);
+          if (subResult) return subResult;
         }
       }
     } catch (error) {

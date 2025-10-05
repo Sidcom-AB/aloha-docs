@@ -25,26 +25,23 @@ const wsClients = new Set();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
-// API routes
+// API routes (must come before static files)
 app.use('/api', apiRouter(searchEngine, repositoryManager, mcpRouter));
 
-// Manual reload endpoint for repositories
-app.post('/api/reload', async (req, res) => {
-  try {
-    await repositoryManager.validateAllRepositories();
-    res.json({ 
-      success: true, 
-      message: 'Repositories reloaded',
-      repositories: repositoryManager.getRepositoryHierarchy()
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
+// Serve static files for specific file extensions only
+app.use('/css', express.static('public/css'));
+app.use('/js', express.static('public/js'));
+app.use('/assets', express.static('public/assets'));
+
+// Root route - serve marketplace
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
+// Framework viewer route - all other routes
+app.get('/:frameworkId', (req, res) => {
+  res.sendFile('framework.html', { root: 'public' });
 });
 
 // WebSocket handling for MCP

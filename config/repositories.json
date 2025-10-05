@@ -1,4 +1,12 @@
 {
   "version": "1.0.0",
-  "repositories": []
+  "repositories": [
+    {
+      "id": "aloha-sample",
+      "name": "Aloha Sample",
+      "description": "Sample documentation for Aloha Framework",
+      "url": "https://github.com/Sidcom-AB/aloha-docs/tree/master/docs",
+      "enabled": true
+    }
+  ]
 }

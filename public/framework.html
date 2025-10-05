@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Framework Documentation</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/syntax.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a0e27 0%, #151932 100%);
+      color: #ffffff;
+      min-height: 100vh;
+    }
+    
+    .back-button {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(30, 33, 57, 0.9);
+      border: 1px solid #2a2d47;
+      color: #64ffda;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      z-index: 100;
+    }
+    
+    .back-button:hover {
+      background: #1e2139;
+      transform: translateX(-2px);
+    }
+    
+    .framework-header {
+      background: rgba(30, 33, 57, 0.9);
+      border-bottom: 1px solid #2a2d47;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .framework-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, #64ffda 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .framework-description {
+      color: #8892b0;
+      font-size: 1.1rem;
+    }
+    
+    .content-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 2rem;
+    }
+    
+    .sidebar {
+      background: rgba(30, 33, 57, 0.5);
+      border: 1px solid #2a2d47;
+      border-radius: 8px;
+      padding: 1rem;
+      height: fit-content;
+      position: sticky;
+      top: 5rem;
+    }
+    
+    .sidebar h3 {
+      color: #64ffda;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .nav-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .nav-section li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .nav-section a {
+      color: #8892b0;
+      text-decoration: none;
+      display: block;
+      padding: 0.5rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .nav-section a:hover,
+    .nav-section a.active {
+      background: rgba(100, 255, 218, 0.1);
+      color: #64ffda;
+    }
+    
+    .doc-content {
+      background: rgba(30, 33, 57, 0.5);
+      border: 1px solid #2a2d47;
+      border-radius: 8px;
+      padding: 2rem;
+      min-height: 500px;
+    }
+    
+    .doc-content h1 {
+      color: #ffffff;
+      border-bottom: 2px solid #2a2d47;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .doc-content h2 {
+      color: #64ffda;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .doc-content h3 {
+      color: #ffffff;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .doc-content p {
+      color: #8892b0;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    .doc-content code {
+      background: rgba(100, 255, 218, 0.1);
+      color: #64ffda;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .doc-content pre {
+      background: #0a0e27;
+      border: 1px solid #2a2d47;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    
+    .doc-content pre code {
+      background: none;
+      padding: 0;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+    }
+    
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 3px solid #2a2d47;
+      border-top-color: #64ffda;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid #f87171;
+      color: #f87171;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 2rem 0;
+    }
+    
+    @media (max-width: 768px) {
+      .content-wrapper {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-button">
+    <span>←</span> Back to Marketplace
+  </a>
+  
+  <div class="framework-header">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+      <h1 class="framework-title" id="frameworkTitle">Loading...</h1>
+      <p class="framework-description" id="frameworkDescription"></p>
+    </div>
+  </div>
+  
+  <div class="content-wrapper">
+    <aside class="sidebar">
+      <nav id="navigation">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+        </div>
+      </nav>
+    </aside>
+    
+    <main class="doc-content" id="docContent">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+      </div>
+    </main>
+  </div>
+  
+  <script type="module">
+    import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+    
+    let currentFramework = null;
+    let currentDoc = null;
+    
+    async function loadFramework() {
+      const frameworkId = window.location.pathname.substring(1);
+      
+      try {
+        // Load framework details
+        const response = await fetch(`/api/repos/${frameworkId}`);
+        if (!response.ok) throw new Error('Framework not found');
+        
+        currentFramework = await response.json();
+        
+        // Update header
+        document.getElementById('frameworkTitle').textContent = currentFramework.name;
+        document.getElementById('frameworkDescription').textContent = currentFramework.description;
+        document.title = `${currentFramework.name} - Documentation`;
+        
+        // Load navigation
+        if (currentFramework.structure) {
+          renderNavigation(currentFramework.structure);
+        } else {
+          document.getElementById('navigation').innerHTML = 
+            '<p style="color: #8892b0;">No documentation available yet.</p>';
+        }
+        
+        // Load first document
+        const firstDoc = getFirstDocument(currentFramework.structure);
+        if (firstDoc) {
+          if (firstDoc.type === 'component') {
+            loadSchema(firstDoc.file);
+          } else {
+            loadDocument(firstDoc.file);
+          }
+        } else {
+          document.getElementById('docContent').innerHTML = 
+            '<h1>Welcome</h1><p>Select a document from the navigation to get started.</p>';
+        }
+        
+      } catch (error) {
+        console.error('Failed to load framework:', error);
+        document.getElementById('docContent').innerHTML = 
+          `<div class="error-message">Failed to load framework: ${error.message}</div>`;
+      }
+    }
+    
+    function getFirstDocument(structure) {
+      if (!structure || !structure.categories) return null;
+      
+      for (const category of structure.categories) {
+        if (category.items && category.items.length > 0) {
+          return category.items[0];
+        }
+      }
+      return null;
+    }
+    
+    function renderNavigation(structure) {
+      if (!structure || !structure.categories) {
+        document.getElementById('navigation').innerHTML = 
+          '<p style="color: #8892b0;">No navigation available.</p>';
+        return;
+      }
+      
+      let navHtml = '';
+      
+      for (const category of structure.categories) {
+        navHtml += `
+          <div class="nav-section">
+            <h3>${category.title}</h3>
+            <ul>
+        `;
+        
+        for (const item of category.items) {
+          if (item.type === 'component') {
+            navHtml += `
+              <li>
+                <a href="#" onclick="loadSchema('${item.file}'); return false;" 
+                   data-file="${item.file}">
+                  ${item.title}
+                </a>
+              </li>
+            `;
+          } else {
+            navHtml += `
+              <li>
+                <a href="#" onclick="loadDocument('${item.file}'); return false;" 
+                   data-file="${item.file}">
+                  ${item.title}
+                </a>
+              </li>
+            `;
+          }
+        }
+        
+        navHtml += '</ul></div>';
+      }
+      
+      document.getElementById('navigation').innerHTML = navHtml;
+    }
+    
+    window.loadDocument = async function(docPath) {
+      if (currentDoc === docPath) return;
+      
+      const frameworkId = window.location.pathname.substring(1);
+      
+      // Update active state
+      document.querySelectorAll('.nav-section a').forEach(a => {
+        a.classList.toggle('active', a.dataset.file === docPath);
+      });
+      
+      // Show loading
+      document.getElementById('docContent').innerHTML = 
+        '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        const response = await fetch(`/api/repos/${frameworkId}/docs/${docPath}`);
+        if (!response.ok) throw new Error('Document not found');
+        
+        const data = await response.json();
+        
+        // Render markdown
+        const html = marked(data.content);
+        document.getElementById('docContent').innerHTML = html;
+        
+        // Highlight code blocks
+        if (window.Prism) {
+          Prism.highlightAll();
+        }
+        
+        currentDoc = docPath;
+        
+      } catch (error) {
+        console.error('Failed to load document:', error);
+        document.getElementById('docContent').innerHTML = 
+          `<div class="error-message">Failed to load document: ${error.message}</div>`;
+      }
+    }
+    
+    window.loadSchema = async function(schemaPath) {
+      if (currentDoc === schemaPath) return;
+      
+      const frameworkId = window.location.pathname.substring(1);
+      
+      // Update active state
+      document.querySelectorAll('.nav-section a').forEach(a => {
+        a.classList.toggle('active', a.dataset.file === schemaPath);
+      });
+      
+      // Show loading
+      document.getElementById('docContent').innerHTML = 
+        '<div class="loading"><div class="loading-spinner"></div></div>';
+      
+      try {
+        const response = await fetch(`/api/repos/${frameworkId}/docs/${schemaPath}`);
+        if (!response.ok) throw new Error('Schema not found');
+        
+        const data = await response.json();
+        const schema = JSON.parse(data.content);
+        
+        // Render schema as documentation
+        let html = `<h1>${schema.title || schema.tagName}</h1>`;
+        
+        if (schema.description) {
+          html += `<p>${schema.description}</p>`;
+        }
+        
+        if (schema.tagName) {
+          html += `<h2>Usage</h2>`;
+          html += `<pre><code>&lt;${schema.tagName}&gt;&lt;/${schema.tagName}&gt;</code></pre>`;
+        }
+        
+        if (schema.properties) {
+          html += `<h2>Properties</h2>`;
+          html += `<table style="width: 100%; border-collapse: collapse;">`;
+          html += `<thead><tr>
+            <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #2a2d47;">Property</th>
+            <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #2a2d47;">Type</th>
+            <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #2a2d47;">Description</th>
+          </tr></thead><tbody>`;
+          
+          for (const [propName, propDef] of Object.entries(schema.properties)) {
+            html += `<tr>`;
+            html += `<td style="padding: 0.5rem; border-bottom: 1px solid #1a1d37;"><code>${propName}</code></td>`;
+            html += `<td style="padding: 0.5rem; border-bottom: 1px solid #1a1d37;">${propDef.type || 'any'}</td>`;
+            html += `<td style="padding: 0.5rem; border-bottom: 1px solid #1a1d37;">${propDef.description || ''}</td>`;
+            html += `</tr>`;
+          }
+          
+          html += `</tbody></table>`;
+        }
+        
+        if (schema.events) {
+          html += `<h2>Events</h2>`;
+          html += `<ul>`;
+          for (const event of schema.events) {
+            html += `<li><code>${event.name}</code>: ${event.description || ''}</li>`;
+          }
+          html += `</ul>`;
+        }
+        
+        if (schema.slots) {
+          html += `<h2>Slots</h2>`;
+          html += `<ul>`;
+          for (const slot of schema.slots) {
+            html += `<li><code>${slot.name || 'default'}</code>: ${slot.description || ''}</li>`;
+          }
+          html += `</ul>`;
+        }
+        
+        if (schema.examples && schema.examples.length > 0) {
+          html += `<h2>Examples</h2>`;
+          for (const example of schema.examples) {
+            if (example.title) {
+              html += `<h3>${example.title}</h3>`;
+            }
+            html += `<pre><code>${example.code}</code></pre>`;
+          }
+        }
+        
+        document.getElementById('docContent').innerHTML = html;
+        
+        // Highlight code blocks
+        if (window.Prism) {
+          Prism.highlightAll();
+        }
+        
+        currentDoc = schemaPath;
+        
+      } catch (error) {
+        console.error('Failed to load schema:', error);
+        document.getElementById('docContent').innerHTML = 
+          `<div class="error-message">Failed to load schema: ${error.message}</div>`;
+      }
+    }
+    
+    // Load framework on page load
+    loadFramework();
+  </script>
+  
+  <!-- Optional: Add Prism for syntax highlighting -->
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+</body>
+</html>
