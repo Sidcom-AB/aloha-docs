@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Design Tokens",
+  "description": "Design system tokens for consistent theming across the Aloha Framework",
+  "type": "object",
+  "tokens": {
+    "colors": {
+      "primary": "#2563eb",
+      "primary-dark": "#1d4ed8",
+      "primary-light": "#60a5fa",
+      "secondary": "#10b981",
+      "secondary-dark": "#059669",
+      "secondary-light": "#34d399",
+      "danger": "#ef4444",
+      "warning": "#f59e0b",
+      "success": "#10b981",
+      "info": "#3b82f6",
+      "text": "#1f2937",
+      "text-muted": "#6b7280",
+      "background": "#ffffff",
+      "surface": "#f9fafb",
+      "border": "#e5e7eb",
+      "shadow": "rgba(0, 0, 0, 0.1)"
+    },
+    "typography": {
+      "fontFamily": {
+        "sans": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+        "mono": "'Fira Code', 'SF Mono', Consolas, monospace"
+      },
+      "fontSize": {
+        "xs": "0.75rem",
+        "sm": "0.875rem",
+        "base": "1rem",
+        "lg": "1.125rem",
+        "xl": "1.25rem",
+        "2xl": "1.5rem",
+        "3xl": "1.875rem",
+        "4xl": "2.25rem"
+      },
+      "fontWeight": {
+        "normal": "400",
+        "medium": "500",
+        "semibold": "600",
+        "bold": "700"
+      },
+      "lineHeight": {
+        "tight": "1.25",
+        "normal": "1.5",
+        "relaxed": "1.75"
+      }
+    },
+    "spacing": {
+      "0": "0",
+      "px": "1px",
+      "0.5": "0.125rem",
+      "1": "0.25rem",
+      "2": "0.5rem",
+      "3": "0.75rem",
+      "4": "1rem",
+      "5": "1.25rem",
+      "6": "1.5rem",
+      "8": "2rem",
+      "10": "2.5rem",
+      "12": "3rem",
+      "16": "4rem",
+      "20": "5rem"
+    },
+    "shadows": {
+      "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+      "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+      "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+      "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+      "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+      "inner": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
+      "none": "none"
+    },
+    "radius": {
+      "none": "0",
+      "sm": "0.125rem",
+      "md": "0.375rem",
+      "lg": "0.5rem",
+      "xl": "0.75rem",
+      "2xl": "1rem",
+      "full": "9999px"
+    },
+    "animation": {
+      "duration": {
+        "fast": "150ms",
+        "normal": "300ms",
+        "slow": "500ms"
+      },
+      "easing": {
+        "linear": "linear",
+        "ease": "ease",
+        "easeIn": "ease-in",
+        "easeOut": "ease-out",
+        "easeInOut": "ease-in-out"
+      }
+    },
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px",
+      "2xl": "1536px"
+    }
+  },
+  "examples": [
+    {
+      "title": "Using Color Tokens",
+      "code": ":root {\n  --primary: #2563eb;\n  --secondary: #10b981;\n}"
+    },
+    {
+      "title": "Component Theming",
+      "code": "x-button {\n  --button-bg: var(--primary);\n  --button-radius: 0.5rem;\n}"
+    }
+  ]
+}

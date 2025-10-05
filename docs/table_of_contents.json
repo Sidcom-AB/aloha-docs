@@ -1,0 +1,67 @@
+{
+  "title": "Aloha Framework Documentation",
+  "description": "Component library with AI-first documentation",
+  "version": "1.0.0",
+  "sections": [
+    {
+      "title": "Getting Started",
+      "items": [
+        {
+          "title": "Introduction",
+          "file": "content/getting-started.md",
+          "description": "Quick start guide"
+        },
+        {
+          "title": "Theming",
+          "file": "content/theming.md",
+          "description": "Customize appearance"
+        }
+      ]
+    },
+    {
+      "title": "Components",
+      "type": "schemas",
+      "description": "Interactive UI components and design tokens"
+    },
+    {
+      "title": "Guidelines",
+      "items": [
+        {
+          "title": "Design Principles",
+          "file": "content/design-principles.md",
+          "description": "Core design philosophy"
+        },
+        {
+          "title": "Accessibility",
+          "file": "content/accessibility.md",
+          "description": "WCAG compliance guide"
+        }
+      ]
+    },
+    {
+      "title": "API Reference",
+      "items": [
+        {
+          "title": "Events",
+          "file": "content/events.md",
+          "description": "Event handling"
+        },
+        {
+          "title": "Methods",
+          "file": "content/methods.md",
+          "description": "Component methods"
+        },
+        {
+          "title": "Slots",
+          "file": "content/slots.md",
+          "description": "Content projection"
+        },
+        {
+          "title": "Styling",
+          "file": "content/styling.md",
+          "description": "CSS customization"
+        }
+      ]
+    }
+  ]
+}

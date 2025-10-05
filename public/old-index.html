@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aloha Framework Documentation</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/syntax.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1><span class="logo">🍍</span> Aloha Framework</h1>
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search docs..." />
+        </div>
+      </div>
+      
+      <nav class="nav-menu">
+        <section class="nav-section">
+          <h3>Getting Started</h3>
+          <ul id="guides-list"></ul>
+        </section>
+        
+        <section class="nav-section">
+          <h3>Components</h3>
+          <ul id="components-list"></ul>
+        </section>
+        
+        <section class="nav-section">
+          <h3>API Reference</h3>
+          <ul id="api-list"></ul>
+        </section>
+        
+        <section class="nav-section">
+          <h3>Design Tokens</h3>
+          <ul>
+            <li><a href="#" data-path="tokens">View All Tokens</a></li>
+          </ul>
+        </section>
+      </nav>
+    </aside>
+    
+    <main class="content">
+      <div id="search-results" class="search-results hidden"></div>
+      
+      <article id="doc-content" class="doc-content">
+        <div class="welcome">
+          <h1>Welcome to Aloha Framework Documentation</h1>
+          <p>An AI-first component documentation system with MCP server integration.</p>
+          
+          <div class="features">
+            <div class="feature-card">
+              <h3>Components</h3>
+              <p>Browse our collection of web components with full API documentation.</p>
+            </div>
+            
+            <div class="feature-card">
+              <h3>Design Tokens</h3>
+              <p>Explore design tokens for consistent theming across your application.</p>
+            </div>
+            
+            <div class="feature-card">
+              <h3>MCP Integration</h3>
+              <p>Connect with Claude Code for AI-powered assistance.</p>
+            </div>
+            
+            <div class="feature-card">
+              <h3>Search</h3>
+              <p>Semantic search powered by RAG for finding exactly what you need.</p>
+            </div>
+          </div>
+          
+          <div class="quick-start">
+            <h2>MCP Connection</h2>
+            <pre><code>{
+  "mcpServers": {
+    "aloha-docs": {
+      "command": "node",
+      "args": ["server/index.js"],
+      "env": {
+        "PORT": "3000",
+        "API_KEY": "your-api-key"
+      }
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+      </article>
+    </main>
+  </div>
+  
+  <button class="reload-button" onclick="window.app?.reloadMonitor?.manualReload()" title="Reload documentation">
+    ↻
+  </button>
+  
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/search.js"></script>
+  <script type="module" src="/js/navigation.js"></script>
+  <script type="module" src="/js/renderer.js"></script>
+  <script type="module" src="/js/reload-monitor.js"></script>
+</body>
+</html>

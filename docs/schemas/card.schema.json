@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Card Component",
+  "tagName": "x-card",
+  "className": "AlohaCard",
+  "description": "A flexible container component for grouping related content",
+  "type": "object",
+  "examples": [
+    {
+      "title": "Basic Card",
+      "code": "<x-card>\n  <h2 slot=\"header\">Card Title</h2>\n  <p>Card content</p>\n</x-card>"
+    },
+    {
+      "title": "Elevated Card",
+      "code": "<x-card elevated>\n  <p>Content with shadow</p>\n</x-card>"
+    }
+  ],
+  "properties": {
+    "elevated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Add elevation shadow to the card"
+    },
+    "padding": {
+      "type": "string",
+      "enum": ["none", "small", "normal", "large"],
+      "default": "normal",
+      "description": "Padding size for card content"
+    },
+    "variant": {
+      "type": "string",
+      "enum": ["default", "outlined", "filled"],
+      "default": "default",
+      "description": "Card style variant"
+    },
+    "interactive": {
+      "type": "boolean",
+      "default": false,
+      "description": "Make card interactive on hover"
+    }
+  },
+  "slots": [
+    {
+      "name": "header",
+      "description": "Card header content"
+    },
+    {
+      "name": "",
+      "description": "Main card content"
+    },
+    {
+      "name": "footer",
+      "description": "Card footer content"
+    },
+    {
+      "name": "media",
+      "description": "Media content (images, videos)"
+    }
+  ],
+  "cssParts": [
+    {
+      "name": "container",
+      "description": "Main card container"
+    },
+    {
+      "name": "header",
+      "description": "Header section"
+    },
+    {
+      "name": "content",
+      "description": "Content section"
+    },
+    {
+      "name": "footer",
+      "description": "Footer section"
+    }
+  ],
+  "cssProperties": [
+    {
+      "name": "--card-bg",
+      "description": "Card background color",
+      "default": "#ffffff"
+    },
+    {
+      "name": "--card-border",
+      "description": "Card border color",
+      "default": "var(--aloha-border)"
+    },
+    {
+      "name": "--card-shadow",
+      "description": "Card shadow",
+      "default": "var(--aloha-shadow-md)"
+    },
+    {
+      "name": "--card-radius",
+      "description": "Card border radius",
+      "default": "var(--aloha-radius-lg)"
+    },
+    {
+      "name": "--card-padding",
+      "description": "Card padding",
+      "default": "1.5rem"
+    }
+  ]
+}

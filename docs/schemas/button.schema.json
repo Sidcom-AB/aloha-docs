@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Button Component",
+  "tagName": "x-button",
+  "className": "AlohaButton",
+  "description": "A versatile button component with multiple variants and states",
+  "type": "object",
+  "examples": [
+    {
+      "title": "Primary Button",
+      "code": "<x-button variant=\"primary\">Click me</x-button>"
+    },
+    {
+      "title": "Loading Button",
+      "code": "<x-button loading>Saving...</x-button>"
+    },
+    {
+      "title": "Icon Button",
+      "code": "<x-button icon=\"plus\">Add Item</x-button>"
+    }
+  ],
+  "properties": {
+    "variant": {
+      "type": "string",
+      "enum": ["primary", "secondary", "ghost", "danger"],
+      "default": "primary",
+      "description": "Visual style variant of the button"
+    },
+    "size": {
+      "type": "string",
+      "enum": ["small", "medium", "large"],
+      "default": "medium",
+      "description": "Size of the button"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the button is disabled"
+    },
+    "loading": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show loading spinner"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon name to display"
+    },
+    "fullWidth": {
+      "type": "boolean",
+      "default": false,
+      "description": "Make button full width"
+    }
+  },
+  "events": [
+    {
+      "name": "click",
+      "type": "MouseEvent",
+      "description": "Fired when button is clicked",
+      "bubbles": true
+    },
+    {
+      "name": "focus",
+      "type": "FocusEvent",
+      "description": "Fired when button receives focus",
+      "bubbles": true
+    },
+    {
+      "name": "blur",
+      "type": "FocusEvent",
+      "description": "Fired when button loses focus",
+      "bubbles": true
+    }
+  ],
+  "slots": [
+    {
+      "name": "",
+      "description": "Default slot for button content"
+    },
+    {
+      "name": "icon",
+      "description": "Slot for custom icon element"
+    }
+  ],
+  "cssParts": [
+    {
+      "name": "button",
+      "description": "The button element"
+    },
+    {
+      "name": "icon",
+      "description": "The icon container"
+    },
+    {
+      "name": "spinner",
+      "description": "Loading spinner element"
+    }
+  ],
+  "cssProperties": [
+    {
+      "name": "--button-bg",
+      "description": "Button background color",
+      "default": "var(--aloha-primary)"
+    },
+    {
+      "name": "--button-color",
+      "description": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "name": "--button-radius",
+      "description": "Button border radius",
+      "default": "var(--aloha-radius-md)"
+    }
+  ]
+}
