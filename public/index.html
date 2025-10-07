@@ -5,34 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aloha Framework Marketplace</title>
   <link rel="stylesheet" href="css/main.css">
-  <link rel="stylesheet" href="css/navbar-pill.css">
+  <link rel="stylesheet" href="css/navbar-pill-v2.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --bg-primary: #0a0e27;
-      --bg-secondary: #151932;
-      --bg-card: #1e2139;
-      --text-primary: #ffffff;
-      --text-secondary: #8892b0;
-      --accent: #64ffda;
-      --accent-hover: #4cd9b8;
-      --border: #2a2d47;
-      --success: #4ade80;
-      --warning: #fbbf24;
-      --error: #f87171;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: var(--font-sans);
       background: linear-gradient(135deg, rgba(10, 14, 39, 0.9) 0%, rgba(21, 25, 50, 0.9) 100%),
                   url('/assets/bg2.jpg') center/cover fixed;
-      color: var(--text-primary);
+      color: var(--color-text-light);
       min-height: 100vh;
       margin: 0;
     }
@@ -48,7 +28,7 @@
       font-size: 3.5rem;
       font-weight: 700;
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--color-accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -56,7 +36,7 @@
 
     .hero p {
       font-size: 1.25rem;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       max-width: 600px;
       margin: 0 auto 2rem;
     }
@@ -73,25 +53,25 @@
       background: var(--bg-card);
       padding: 0.75rem;
       border-radius: 12px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-dark);
     }
 
     .search-box input {
       flex: 1;
       background: transparent;
       border: none;
-      color: var(--text-primary);
+      color: var(--color-text-light);
       font-size: 1rem;
       padding: 0.5rem;
       outline: none;
     }
 
     .search-box input::placeholder {
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
     }
 
     .search-box button {
-      background: var(--accent);
+      background: var(--color-accent);
       color: var(--bg-primary);
       border: none;
       padding: 0.75rem 1.5rem;
@@ -129,8 +109,8 @@
       align-items: center;
       gap: 0.5rem;
       background: transparent;
-      color: var(--accent);
-      border: 2px solid var(--accent);
+      color: var(--color-accent);
+      border: 2px solid var(--color-accent);
       padding: 0.75rem 1.5rem;
       border-radius: 8px;
       font-weight: 600;
@@ -139,7 +119,7 @@
     }
 
     .add-button:hover {
-      background: var(--accent);
+      background: var(--color-accent);
       color: var(--bg-primary);
       transform: translateY(-2px);
     }
@@ -153,7 +133,7 @@
 
     .framework-card {
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-dark);
       border-radius: 12px;
       padding: 1.5rem;
       transition: all 0.3s;
@@ -169,14 +149,14 @@
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+      background: linear-gradient(90deg, var(--color-accent) 0%, transparent 100%);
       opacity: 0;
       transition: opacity 0.3s;
     }
 
     .framework-card:hover {
       transform: translateY(-4px);
-      border-color: var(--accent);
+      border-color: var(--color-accent);
       box-shadow: 0 10px 40px rgba(100, 255, 218, 0.1);
     }
 
@@ -194,7 +174,7 @@
     .framework-icon {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      background: linear-gradient(135deg, var(--color-accent) 0%, var(--accent-hover) 100%);
       border-radius: 10px;
       display: flex;
       align-items: center;
@@ -214,12 +194,12 @@
 
     .framework-url {
       font-size: 0.75rem;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       word-break: break-all;
     }
 
     .framework-description {
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       margin-bottom: 1rem;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -231,7 +211,7 @@
       display: flex;
       gap: 1.5rem;
       padding-top: 1rem;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--border-dark);
     }
 
     .stat {
@@ -239,11 +219,11 @@
       align-items: center;
       gap: 0.5rem;
       font-size: 0.875rem;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
     }
 
     .stat-icon {
-      color: var(--accent);
+      color: var(--color-accent);
     }
 
     .status-badge {
@@ -258,12 +238,12 @@
 
     .status-badge.validated {
       background: rgba(74, 222, 128, 0.2);
-      color: var(--success);
+      color: var(--color-success);
     }
 
     .status-badge.pending {
       background: rgba(251, 191, 36, 0.2);
-      color: var(--warning);
+      color: var(--color-warning);
     }
 
     .modal {
@@ -286,7 +266,7 @@
 
     .modal-content {
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-dark);
       border-radius: 16px;
       padding: 2rem;
       max-width: 600px;
@@ -309,13 +289,13 @@
     .close-button {
       background: none;
       border: none;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       font-size: 1.5rem;
       cursor: pointer;
     }
 
     .close-button:hover {
-      color: var(--text-primary);
+      color: var(--color-text-light);
     }
 
     .form-group {
@@ -326,14 +306,14 @@
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
-      color: var(--text-primary);
+      color: var(--color-text-light);
     }
 
     .form-group input {
       width: 100%;
       background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
+      border: 1px solid var(--border-dark);
+      color: var(--color-text-light);
       padding: 0.75rem;
       border-radius: 8px;
       font-size: 1rem;
@@ -342,13 +322,13 @@
 
     .form-group input:focus {
       outline: none;
-      border-color: var(--accent);
+      border-color: var(--color-accent);
     }
 
     .form-group small {
       display: block;
       margin-top: 0.25rem;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       font-size: 0.875rem;
     }
 
@@ -369,17 +349,17 @@
 
     .btn-secondary {
       background: transparent;
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
+      color: var(--color-text-muted);
+      border: 1px solid var(--border-dark);
     }
 
     .btn-secondary:hover {
       border-color: var(--text-primary);
-      color: var(--text-primary);
+      color: var(--color-text-light);
     }
 
     .btn-primary {
-      background: var(--accent);
+      background: var(--color-accent);
       color: var(--bg-primary);
     }
 
@@ -392,8 +372,8 @@
       display: inline-block;
       width: 1.5rem;
       height: 1.5rem;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
+      border: 3px solid var(--border-dark);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -405,13 +385,13 @@
     .empty-state {
       text-align: center;
       padding: 4rem 2rem;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
     }
 
     .empty-state h3 {
       font-size: 1.5rem;
       margin-bottom: 1rem;
-      color: var(--text-primary);
+      color: var(--color-text-light);
     }
 
     .discover-status {
@@ -419,16 +399,16 @@
       padding: 1rem;
       background: var(--bg-secondary);
       border-radius: 8px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-dark);
     }
 
     .discover-status.success {
-      border-color: var(--success);
+      border-color: var(--color-success);
       background: rgba(74, 222, 128, 0.1);
     }
 
     .discover-status.error {
-      border-color: var(--error);
+      border-color: var(--color-error);
       background: rgba(248, 113, 113, 0.1);
     }
   </style>
@@ -437,7 +417,7 @@
   <!-- Pill Style Navigation Bar -->
   <nav class="navbar-pill">
     <a href="/" class="navbar-brand">
-      <span class="brand-icon">🌺</span>
+      <span class="brand-icon">🍍</span>
       <span>Aloha Framework</span>
     </a>
     
@@ -551,17 +531,25 @@
       document.getElementById('navbarMenu').classList.toggle('active');
     }
     
-    // Initialize pill position
+    // Initialize pill position with exact measurements
     function updatePillPosition() {
       const activeItem = document.querySelector('.nav-item.active');
       const pillSelector = document.querySelector('.pill-selector');
       
       if (activeItem && pillSelector) {
+        // Get exact position and size using getBoundingClientRect for precision
+        const navRect = document.querySelector('.navbar-nav').getBoundingClientRect();
         const itemRect = activeItem.getBoundingClientRect();
-        const navRect = activeItem.parentElement.getBoundingClientRect();
         
-        pillSelector.style.left = `${activeItem.offsetLeft}px`;
-        pillSelector.style.width = `${activeItem.offsetWidth}px`;
+        // Calculate relative position within nav container
+        const itemLeft = itemRect.left - navRect.left;
+        const itemWidth = itemRect.width;
+        
+        // Apply with smooth transition
+        requestAnimationFrame(() => {
+          pillSelector.style.left = `${itemLeft}px`;
+          pillSelector.style.width = `${itemWidth}px`;
+        });
       }
     }
     

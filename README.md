@@ -1,290 +1,251 @@
-# 🍍 Aloha Framework Docs
+# 🍍 Aloha Framework Marketplace
 
-**AI-first documentation system for component libraries**
+**A modern documentation marketplace for web frameworks with AI-first MCP integration**
 
-Transform your component documentation into a searchable, AI-friendly knowledge base that works seamlessly with Claude, ChatGPT, and other AI assistants through MCP (Model Context Protocol).
+Discover, explore, and share framework documentation in a beautiful marketplace. No more `table_of_contents.json` - just push your docs to GitHub and let Auto-Discovery handle the rest!
 
-## 📚 Documentation Structure Guide
+## ✨ Features
 
-This guide shows framework creators how to structure their documentation for optimal AI comprehension and human readability.
+- 🚀 **Framework Marketplace** - Beautiful gallery of framework documentations
+- 🔍 **Auto-Discovery** - Automatically finds and categorizes `.md` and `.schema.json` files
+- 🤖 **MCP Server** - Claude Code integration for AI assistance
+- 🌐 **GitHub Native** - Direct loading from GitHub repositories
+- 🎨 **Modern UI** - Stunning pill-style navigation with smooth animations
+- 🔐 **Private Repo Support** - Per-repository token authentication
+- 📚 **Smart Categorization** - Folder structure becomes navigation
 
-### Required Folder Structure
+## 🚀 Quick Start
 
-Your documentation must follow this exact structure:
-
-```
-your-project/
-└── docs/                          # Single documentation folder
-    ├── table_of_contents.json    # Navigation structure (REQUIRED)
-    ├── schemas/                  # Component & token definitions
-    │   ├── button.schema.json    # Component schemas
-    │   ├── card.schema.json      
-    │   └── tokens.schema.json    # Design tokens as schema
-    └── content/                  # Markdown documentation
-        ├── getting-started.md
-        ├── contributing.md
-        └── api-reference.md
+```bash
+npm install
+npm start
 ```
 
-### 1️⃣ Table of Contents (Required)
+Visit http://localhost:3000 to see the marketplace!
 
-**File:** `docs/table_of_contents.json`
+## 📚 How It Works
 
-This is your documentation's entry point. It defines navigation and structure:
+### No More `table_of_contents.json`! 🎉
+
+The system uses **Auto-Discovery** to automatically find and organize your documentation:
+
+```
+your-repo/
+├── docs/
+│   ├── getting-started/        → "Getting Started" section
+│   │   ├── introduction.md
+│   │   └── installation.md
+│   ├── components/             → "Components" section
+│   │   ├── button.schema.json
+│   │   └── card.schema.json
+│   ├── api/                    → "API" section
+│   │   └── methods.md
+│   └── aloha.json             → Optional metadata
+```
+
+### Optional: `aloha.json` for Customization
+
+Add an `aloha.json` file for custom metadata and ordering:
 
 ```json
 {
-  "title": "Your Framework Name",
-  "description": "Brief description for AI context",
-  "version": "1.0.0",
-  "sections": [
-    {
-      "title": "Getting Started",
-      "items": [
-        {
-          "title": "Installation",
-          "file": "content/installation.md",
-          "description": "How to install the framework"
-        },
-        {
-          "title": "Quick Start",
-          "file": "content/quick-start.md",
-          "description": "5-minute tutorial"
-        }
-      ]
+  "title": "My Amazing Framework",
+  "description": "The best framework ever",
+  "logo": "assets/logo.png",
+  "categories": {
+    "getting-started": {
+      "title": "🚀 Quick Start",
+      "order": 1
     },
-    {
-      "title": "Components",
-      "type": "schemas",  // Auto-populates from schemas folder
-      "description": "UI components documentation"
+    "components": {
+      "title": "🧩 Components",
+      "order": 2
     }
-  ]
+  }
 }
 ```
 
-**Key points:**
-- `type: "schemas"` auto-generates navigation from your schemas folder
-- `file` paths are relative to docs root
-- `description` helps AI understand context
+## 🎯 Adding Your Framework
 
-### 2️⃣ Component Schemas
+### Via the Marketplace UI
 
-**Location:** `docs/schemas/*.schema.json`
+1. Click **"+ Add Framework"** button
+2. Enter your GitHub repository URL
+3. (Optional) Add GitHub token for private repos
+4. Click **Auto-Discover** to validate
+5. Submit!
 
-Each component needs a schema file that serves as the single source of truth:
+### What Gets Auto-Discovered
+
+- **Markdown Files** (`.md`) → Documentation pages
+- **Schema Files** (`.schema.json`) → Component definitions
+- **Folder Names** → Navigation categories
+- **File Names** → Page titles (prettified)
+
+## 🤖 MCP Integration
+
+### Connect with Claude Code
+
+```json
+{
+  "mcpServers": {
+    "aloha": {
+      "command": "node",
+      "args": ["server/index.js"],
+      "cwd": "/path/to/aloha-framework"
+    }
+  }
+}
+```
+
+### MCP Routing Hierarchy
+
+- `/` → Access all frameworks
+- `/framework-id` → Specific framework
+- `/framework-id/child` → Sub-framework
+
+RAG search works hierarchically - searching downward in the tree only.
+
+## 📁 Project Structure
+
+```
+aloha-framework/
+├── server/
+│   └── modules/
+│       ├── auto-discovery.js      # Smart doc detection
+│       ├── github-loader.js       # GitHub API client
+│       ├── repository-manager.js  # Framework management
+│       └── mcp-router.js          # Hierarchical routing
+├── public/
+│   ├── index.html                 # Marketplace
+│   ├── framework.html             # Doc viewer
+│   └── css/
+│       └── navbar-pill.css        # Beautiful navigation
+└── config/
+    └── repositories.json          # Stored frameworks
+```
+
+## 🔧 Component Schema Format
+
+For components, use the standard JSON Schema format:
 
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Button Component",
-  "description": "A versatile button with multiple variants",
-  "tagName": "x-button",           // Custom element tag
-  "className": "ButtonElement",    // Optional: JS class name
+  "description": "A versatile button component",
+  "tagName": "x-button",
   
   "properties": {
     "variant": {
       "type": "string",
-      "enum": ["primary", "secondary", "ghost"],
-      "default": "primary",
-      "description": "Visual style variant"
-    },
-    "disabled": {
-      "type": "boolean",
-      "default": false,
-      "description": "Disable interactions"
+      "enum": ["primary", "secondary"],
+      "description": "Button style variant"
     }
   },
   
   "events": [
     {
       "name": "click",
-      "type": "MouseEvent",
-      "description": "Fired on button click",
-      "bubbles": true
-    }
-  ],
-  
-  "slots": [
-    {
-      "name": "",
-      "description": "Default slot for button content"
-    },
-    {
-      "name": "icon",
-      "description": "Slot for icon element"
-    }
-  ],
-  
-  "cssParts": [
-    {
-      "name": "button",
-      "description": "The button element"
-    }
-  ],
-  
-  "cssProperties": [
-    {
-      "name": "--button-bg",
-      "description": "Background color",
-      "default": "var(--primary)"
+      "description": "Fired on click"
     }
   ],
   
   "examples": [
     {
-      "title": "Primary Button",
-      "code": "<x-button variant=\"primary\">Click me</x-button>"
+      "title": "Basic Button",
+      "code": "<x-button>Click me</x-button>"
     }
   ]
 }
 ```
 
-**Schema Benefits:**
-- Single source of truth (no duplication)
-- Auto-generates human-readable docs
-- AI can parse structured data perfectly
-- Type-safe and validatable
+## 🌟 Best Practices
 
-### 3️⃣ Design Tokens
+### DO's ✅
+- Use descriptive folder names (they become categories)
+- Keep related docs in the same folder
+- Add `aloha.json` for custom branding
+- Include examples in your schemas
+- Use meaningful file names
 
-**File:** `docs/schemas/tokens.schema.json`
+### DON'Ts ❌
+- Don't use `table_of_contents.json` (deprecated)
+- Don't nest folders too deep (max 3 levels)
+- Don't mix docs with source code
+- Don't forget descriptions in schemas
 
-Treat design tokens as a special schema:
+## 🔌 API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /` | Marketplace homepage |
+| `GET /api/repositories` | List all frameworks |
+| `POST /api/repos` | Add new framework |
+| `POST /api/discover` | Auto-discover docs |
+| `GET /api/repos/:id` | Framework details |
+| `GET /:framework-id` | View framework docs |
+
+## 🛠️ Configuration
+
+### Repository Storage
+
+Frameworks are stored in `config/repositories.json`:
 
 ```json
 {
-  "title": "Design Tokens",
-  "description": "Design system tokens for theming",
-  "tokens": {
-    "colors": {
-      "primary": "#2563eb",
-      "secondary": "#10b981",
-      "text": "#1f2937"
-    },
-    "spacing": {
-      "sm": "0.5rem",
-      "md": "1rem",
-      "lg": "1.5rem"
-    },
-    "typography": {
-      "fontFamily": {
-        "sans": "system-ui, sans-serif",
-        "mono": "monospace"
-      }
+  "repositories": [
+    {
+      "id": "my-framework",
+      "name": "My Framework",
+      "url": "https://github.com/user/repo/tree/main/docs",
+      "encryptedToken": "...",  // For private repos
+      "enabled": true
     }
-  }
+  ]
 }
 ```
-
-### 4️⃣ Markdown Content
-
-**Location:** `docs/content/*.md`
-
-Keep all markdown files flat in the content folder:
-
-```markdown
-# Component Best Practices
-
-Brief description for AI context.
-
-tags: [guide, components, best-practices]
-
-## Section Title
-
-Content here...
-```
-
-**Markdown Tips:**
-- Add `tags: [...]` for better search
-- First `# Title` becomes the document title
-- Keep files focused on single topics
-- Use descriptive filenames (they become URLs)
-
-### 5️⃣ MCP Integration
-
-Once your docs follow this structure, AI assistants can:
-
-1. **Search semantically**: Find relevant information across all docs
-2. **Get component details**: Retrieve exact API specifications
-3. **Access design tokens**: Get theming information
-4. **Browse documentation**: Navigate through structured content
-
-Connect with Claude Code:
-```json
-{
-  "mcpServers": {
-    "your-framework": {
-      "command": "npx",
-      "args": ["aloha-framework-docs", "--docs", "./docs"]
-    }
-  }
-}
-```
-
-## 🚀 Quick Start
-
-### For Framework Authors
-
-1. **Structure your docs** following the guide above
-2. **Install the server**: 
-   ```bash
-   npm install -g aloha-framework-docs
-   ```
-3. **Run locally**:
-   ```bash
-   aloha-docs --docs ./docs
-   ```
-4. **Access at** http://localhost:3000
 
 ### Environment Variables
 
-```env
-DOCS_PATH=./docs          # Path to your docs folder
-PORT=3000                 # Server port
-WATCH_FILES=true          # Auto-reload on changes
-```
-
-## 🎯 Why This Structure?
-
-1. **No Duplication**: Each component defined once in schemas
-2. **AI-Optimized**: Structured JSON for perfect AI parsing
-3. **Human-Friendly**: Auto-generates beautiful documentation
-4. **Maintainable**: Single source of truth for all component info
-5. **Searchable**: Built-in RAG for semantic search
-
-## 📝 Best Practices
-
-### DO's ✅
-- Keep schemas as single source of truth
-- Use descriptive titles and descriptions
-- Include code examples in schemas
-- Tag markdown files for better search
-- Keep file names URL-friendly
-
-### DON'Ts ❌
-- Don't duplicate component info in markdown
-- Don't nest markdown files in deep folders
-- Don't mix documentation with source code
-- Don't forget descriptions (AI needs context)
-
-## 🔧 Advanced Features
-
-### Auto-reload
-Changes to your docs are detected and reloaded automatically.
-
-### Multiple Projects
 ```bash
-DOCS_PATH=/path/to/project-a/docs aloha-docs  # Project A
-DOCS_PATH=/path/to/project-b/docs aloha-docs  # Project B
+# Optional - for higher GitHub API rate limits
+GITHUB_TOKEN=ghp_your_token_here
+
+# Server port
+PORT=3000
 ```
 
-### Custom Schemas
-Extend schemas with custom fields - they'll be preserved and shown in docs.
+## 🚢 Deployment
+
+### Docker
+
+```dockerfile
+FROM node:18
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+### Vercel/Netlify
+
+Deploy the `public` folder as static site and `server` as serverless functions.
+
+## 🤝 Contributing
+
+We love contributions! Feel free to:
+
+1. Add your framework to the marketplace
+2. Improve the UI/UX
+3. Add new features
+4. Report bugs
 
 ## 📄 License
 
-MIT
+MIT - Use freely in your projects!
 
 ---
 
-Built with 🍍 for the component library community
+Built with 🍍 by the Aloha team for the developer community
