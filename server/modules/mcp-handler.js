@@ -221,7 +221,8 @@ export class MCPHandler {
       totalResults: results.length,
       results: results.map(r => ({
         title: r.title,
-        repository: r.repositoryName,
+        frameworkId: r.repositoryId,
+        frameworkName: r.repositoryName,
         section: r.section,
         description: r.description,
         file: r.file,
@@ -241,7 +242,8 @@ export class MCPHandler {
       totalResults: results.length,
       results: results.map(r => ({
         title: r.title,
-        repository: r.repositoryName,
+        frameworkId: r.repositoryId,
+        frameworkName: r.repositoryName,
         section: r.section,
         description: r.description,
         file: r.file,
