@@ -8,103 +8,19 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
   router.post('/search', async (req, res) => {
     try {
       const { query, limit = 5 } = req.body;
-      
+
       if (!query) {
         return res.status(400).json({ error: 'Query is required' });
       }
-      
+
       const results = await searchEngine.search(query, limit);
       res.json({ results });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
-  router.get('/docs', (req, res) => {
-    const docs = docsLoader.getAllDocs();
-    const summary = docs.map(d => ({
-      path: d.path,
-      title: d.title,
-      type: d.type,
-      tags: d.tags
-    }));
-    res.json(summary);
-  });
-  
-  router.get('/docs/*', (req, res) => {
-    const path = req.params[0];
-    const doc = docsLoader.getDoc(path);
-    
-    if (!doc) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-    
-    res.json(doc);
-  });
-  
-  router.get('/components', (req, res) => {
-    const components = Array.from(docsLoader.components.entries())
-      .filter(([key, schema]) => schema.tagName)
-      .map(([key, schema]) => ({
-        name: schema.tagName,
-        title: schema.title,
-        description: schema.description
-      }));
-    
-    res.json(components);
-  });
-  
-  router.get('/components/:name', (req, res) => {
-    const { name } = req.params;
-    const component = docsLoader.getComponent(name);
-    
-    if (!component) {
-      return res.status(404).json({ error: 'Component not found' });
-    }
-    
-    res.json(component);
-  });
-  
-  router.get('/schemas', (req, res) => {
-    const schemas = Array.from(docsLoader.schemas.keys());
-    res.json(schemas);
-  });
-  
-  router.get('/schemas/:name', (req, res) => {
-    const { name } = req.params;
-    const schema = docsLoader.getSchema(name);
-    
-    if (!schema) {
-      return res.status(404).json({ error: 'Schema not found' });
-    }
-    
-    res.json(schema);
-  });
-  
-  router.get('/tokens', (req, res) => {
-    const tokens = docsLoader.getDesignTokens();
-    res.json(tokens);
-  });
-  
-  router.get('/navigation', (req, res) => {
-    const navigation = docsLoader.getNavigation();
-    res.json(navigation);
-  });
-  
-  router.get('/table-of-contents', (req, res) => {
-    const toc = docsLoader.getTableOfContents();
-    res.json(toc);
-  });
-  
-  router.get('/health', (req, res) => {
-    res.json({ 
-      status: 'healthy',
-      docsCount: docsLoader.docs.size,
-      schemasCount: docsLoader.schemas.size
-    });
-  });
-  
-  // New multi-repository endpoints
+
+  // Multi-repository endpoints
   router.get('/repositories', async (req, res) => {
     try {
       const hierarchy = repositoryManager.getRepositoryHierarchy();
