@@ -3,18 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aloha Framework Marketplace</title>
+  <title>Aloha Docs - Marketplace</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar-pill-v2.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* SPA Container */
+    #app {
+      width: 100%;
+      height: 100%;
+      overflow-y: scroll;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 14, 39, 0.5);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+      border-radius: 10px;
+      border: 2px solid rgba(10, 14, 39, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--color-accent-hover) 0%, var(--color-accent) 100%);
+    }
+
+    /* Firefox scrollbar */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-accent) rgba(10, 14, 39, 0.5);
+    }
+    html {
+      min-height: 100%;
+    }
+
     body {
       font-family: var(--font-sans);
-      background: linear-gradient(135deg, rgba(10, 14, 39, 0.9) 0%, rgba(21, 25, 50, 0.9) 100%),
-                  url('/assets/bg2.jpg') center/cover fixed;
       color: var(--color-text-light);
       min-height: 100vh;
       margin: 0;
+      background: linear-gradient(135deg, rgba(10, 14, 39, 0.9) 0%, rgba(21, 25, 50, 0.9) 100%),
+                  url('/assets/bg2.jpg') center top;
+      background-attachment: fixed;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+
+    /* Fallback for browsers that don't support background-attachment: fixed properly */
+    @supports not (background-attachment: fixed) {
+      body {
+        background-attachment: scroll;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(10, 14, 39, 0.9) 0%, rgba(21, 25, 50, 0.9) 100%),
+                    url('/assets/bg2.jpg') center/cover;
+        background-size: cover;
+        z-index: -1;
+      }
     }
 
     .hero {
@@ -28,7 +86,7 @@
       font-size: 3.5rem;
       font-weight: 700;
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--text-primary) 0%, var(--color-accent) 100%);
+      background: linear-gradient(135deg, #ffffff 0%, var(--color-accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -38,7 +96,38 @@
       font-size: 1.25rem;
       color: var(--color-text-muted);
       max-width: 600px;
-      margin: 0 auto 2rem;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--color-accent);
+      color: #ffffff;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(255, 149, 0, 0.3);
+    }
+
+    .hero-cta:hover {
+      background: var(--color-accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(255, 149, 0, 0.4);
+    }
+
+    .hero-cta:active {
+      transform: translateY(0);
+    }
+
+    .hero-cta i {
+      font-size: 1.3rem;
     }
 
     .search-container {
@@ -48,21 +137,24 @@
     }
 
     .search-box {
-      display: flex;
-      gap: 1rem;
+      position: relative;
       background: var(--bg-card);
-      padding: 0.75rem;
       border-radius: 12px;
       border: 1px solid var(--border-dark);
+      transition: border-color 0.2s;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--color-accent);
     }
 
     .search-box input {
-      flex: 1;
+      width: 100%;
       background: transparent;
       border: none;
       color: var(--color-text-light);
       font-size: 1rem;
-      padding: 0.5rem;
+      padding: 0.75rem 3rem 0.75rem 1rem;
       outline: none;
     }
 
@@ -70,20 +162,23 @@
       color: var(--color-text-muted);
     }
 
-    .search-box button {
-      background: var(--color-accent);
-      color: var(--bg-primary);
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
+    .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      font-size: 1.2rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .search-box button:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
+    .search-icon:hover {
+      color: var(--color-accent);
+    }
+
+    .search-icon:active {
+      transform: translateY(-50%) scale(0.9);
     }
 
     .container {
@@ -93,35 +188,12 @@
     }
 
     .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       margin-bottom: 2rem;
     }
 
     .section-header h2 {
       font-size: 2rem;
       font-weight: 600;
-    }
-
-    .add-button {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: transparent;
-      color: var(--color-accent);
-      border: 2px solid var(--color-accent);
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .add-button:hover {
-      background: var(--color-accent);
-      color: var(--bg-primary);
-      transform: translateY(-2px);
     }
 
     .frameworks-grid {
@@ -411,6 +483,624 @@
       border-color: var(--color-error);
       background: rgba(248, 113, 113, 0.1);
     }
+
+    /* Browse Page Styles */
+    .browse-page {
+      padding: 4rem 2rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .browse-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .browse-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .browse-search {
+      max-width: 600px;
+      margin: 0 auto 3rem;
+    }
+
+    /* Custom Table Styles */
+    .frameworks-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--bg-card);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-dark);
+    }
+
+    .frameworks-table thead {
+      background: var(--bg-secondary);
+    }
+
+    .frameworks-table th {
+      color: var(--color-accent);
+      font-weight: 600;
+      text-align: left;
+      padding: 1rem;
+      border-bottom: 2px solid var(--border-dark);
+      font-size: 0.9rem;
+    }
+
+    .frameworks-table tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    .frameworks-table tbody tr:hover {
+      background: rgba(255, 149, 0, 0.05);
+    }
+
+    .frameworks-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-dark);
+      color: var(--color-text-light);
+      font-size: 0.9rem;
+    }
+
+    .frameworks-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .frameworks-table td code {
+      background: var(--bg-secondary);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--color-accent);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+      padding: 1rem;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-dark);
+    }
+
+    .pagination-info {
+      color: var(--color-text-muted);
+      font-size: 0.875rem;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .pagination-btn {
+      background: var(--bg-secondary);
+      color: var(--color-text-light);
+      border: 1px solid var(--border-dark);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--color-accent);
+      color: var(--bg-primary);
+      border-color: var(--color-accent);
+    }
+
+    .pagination-btn.active {
+      background: var(--color-accent);
+      color: var(--bg-primary);
+      border-color: var(--color-accent);
+      font-weight: 600;
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .grid-action-btn {
+      background: var(--color-accent);
+      color: #ffffff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .grid-action-btn:hover {
+      background: var(--color-accent-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Hide Grid.js built-in search */
+    .gridjs-search {
+      display: none !important;
+    }
+
+    /* Grid.js Custom Styling */
+    .gridjs-wrapper {
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .gridjs-container {
+      background: transparent !important;
+      border: none !important;
+    }
+
+    .gridjs-table {
+      width: 100% !important;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+    }
+
+    .gridjs-thead {
+      background: var(--bg-secondary) !important;
+      border: none !important;
+    }
+
+    .gridjs-th {
+      background: var(--bg-secondary) !important;
+      color: var(--color-accent) !important;
+      border: 1px solid var(--border-dark) !important;
+      padding: 1rem !important;
+      font-weight: 600 !important;
+      text-align: left !important;
+      font-size: 0.9rem !important;
+    }
+
+    .gridjs-th:first-child {
+      border-top-left-radius: 8px !important;
+    }
+
+    .gridjs-th:last-child {
+      border-top-right-radius: 8px !important;
+    }
+
+    .gridjs-tr {
+      background: var(--bg-card) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .gridjs-tr:hover {
+      background: rgba(255, 149, 0, 0.05) !important;
+    }
+
+    .gridjs-td {
+      background: transparent !important;
+      color: var(--color-text-light) !important;
+      border: 1px solid var(--border-dark) !important;
+      border-top: none !important;
+      padding: 1rem !important;
+      font-size: 0.9rem !important;
+    }
+
+    .gridjs-tbody .gridjs-tr:last-child .gridjs-td:first-child {
+      border-bottom-left-radius: 8px !important;
+    }
+
+    .gridjs-tbody .gridjs-tr:last-child .gridjs-td:last-child {
+      border-bottom-right-radius: 8px !important;
+    }
+
+    /* Grid.js Pagination */
+    .gridjs-pagination {
+      background: transparent !important;
+      border: none !important;
+      padding: 1.5rem 0 0 0 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+
+    .gridjs-pages {
+      display: flex !important;
+      gap: 0.5rem !important;
+    }
+
+    .gridjs-pages button {
+      background: var(--bg-secondary) !important;
+      color: var(--color-text-light) !important;
+      border: 1px solid var(--border-dark) !important;
+      padding: 0.5rem 0.75rem !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      font-size: 0.875rem !important;
+      min-width: 36px !important;
+    }
+
+    .gridjs-pages button:hover:not(:disabled) {
+      background: var(--color-accent) !important;
+      color: var(--bg-primary) !important;
+      border-color: var(--color-accent) !important;
+    }
+
+    .gridjs-pages button[aria-current="page"] {
+      background: var(--color-accent) !important;
+      color: var(--bg-primary) !important;
+      border-color: var(--color-accent) !important;
+    }
+
+    .gridjs-pages button:disabled {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+    }
+
+    .gridjs-summary {
+      color: var(--color-text-muted) !important;
+      font-size: 0.875rem !important;
+    }
+
+    /* Grid.js Sort Icons */
+    .gridjs-th-sort {
+      cursor: pointer !important;
+    }
+
+    .gridjs-th-sort:hover {
+      background: rgba(255, 149, 0, 0.1) !important;
+    }
+
+    button.gridjs-sort {
+      background: none !important;
+      border: none !important;
+      color: var(--color-text-muted) !important;
+      margin-left: 0.5rem !important;
+    }
+
+    button.gridjs-sort-asc::after,
+    button.gridjs-sort-desc::after {
+      color: var(--color-accent) !important;
+    }
+
+    /* Grid.js Loading */
+    .gridjs-loading {
+      background: var(--bg-card) !important;
+      color: var(--color-text-light) !important;
+    }
+
+    /* Grid.js Empty State */
+    .gridjs-empty {
+      background: var(--bg-card) !important;
+      color: var(--color-text-muted) !important;
+      padding: 3rem !important;
+      text-align: center !important;
+    }
+
+    /* Add Page / Wizard Styles */
+    .add-page {
+      padding: 4rem 2rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .add-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .add-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .wizard-container {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid var(--border-dark);
+    }
+
+    .wizard-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .wizard-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+
+    .wizard-step.active {
+      opacity: 1;
+    }
+
+    .step-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.2rem;
+      transition: all 0.3s;
+    }
+
+    .wizard-step.active .step-circle {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(255, 149, 0, 0.4);
+    }
+
+    .step-label {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
+    .wizard-step.active .step-label {
+      color: var(--color-accent);
+    }
+
+    .wizard-line {
+      width: 80px;
+      height: 2px;
+      background: var(--border-dark);
+      transition: background 0.3s;
+    }
+
+    .wizard-line.active {
+      background: var(--color-accent);
+    }
+
+    .wizard-content {
+      min-height: 300px;
+      margin-bottom: 2rem;
+    }
+
+    .wizard-step-content h2 {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-description {
+      color: var(--color-text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .wizard-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-dark);
+    }
+
+    .review-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-dark);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .review-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--color-accent);
+    }
+
+    .review-card p {
+      margin-bottom: 0.5rem;
+      color: var(--color-text-light);
+    }
+
+    /* How To Page Styles */
+    .howto-page {
+      padding: 4rem 2rem 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .howto-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .howto-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .howto-header p {
+      color: var(--color-text-muted);
+      font-size: 1.1rem;
+    }
+
+    .guide-section {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border-dark);
+    }
+
+    .guide-section h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+      color: var(--color-accent);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .guide-section h2 i {
+      font-size: 1.5rem;
+    }
+
+    .guide-section h3 {
+      font-size: 1.25rem;
+      margin: 1.5rem 0 1rem;
+      color: var(--color-text-light);
+    }
+
+    .guide-section p {
+      color: var(--color-text-muted);
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+
+    .guide-section ul, .guide-section ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .guide-section li {
+      color: var(--color-text-light);
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+    }
+
+    .dos-donts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .dos-donts {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .do-card, .dont-card {
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 2px solid;
+    }
+
+    .do-card {
+      background: rgba(74, 222, 128, 0.05);
+      border-color: var(--color-success);
+    }
+
+    .do-card h4 {
+      color: var(--color-success);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .dont-card {
+      background: rgba(248, 113, 113, 0.05);
+      border-color: var(--color-error);
+    }
+
+    .dont-card h4 {
+      color: var(--color-error);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .code-example {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-dark);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      position: relative;
+    }
+
+    .code-example .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .code-example .code-title {
+      color: var(--color-accent);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .code-example .code-lang {
+      background: var(--border-dark);
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+    }
+
+    .code-example pre {
+      margin: 0;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .code-example code {
+      color: var(--color-text-light);
+    }
+
+    .highlight-box {
+      background: rgba(255, 149, 0, 0.1);
+      border-left: 4px solid var(--color-accent);
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+    }
+
+    .highlight-box strong {
+      color: var(--color-accent);
+    }
+
+    .folder-structure {
+      background: var(--bg-secondary);
+      padding: 1.5rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.8;
+      margin: 1rem 0;
+      border: 1px solid var(--border-dark);
+    }
+
+    .folder-structure .folder {
+      color: var(--color-accent);
+    }
+
+    .folder-structure .file {
+      color: var(--color-success);
+    }
+
+    .folder-structure .comment {
+      color: var(--color-text-muted);
+    }
   </style>
 </head>
 <body>
@@ -418,7 +1108,7 @@
   <nav class="navbar-pill">
     <a href="/" class="navbar-brand">
       <span class="brand-icon">🍍</span>
-      <span>Aloha Framework</span>
+      <span>Aloha Docs</span>
     </a>
     
     <button class="navbar-toggle" onclick="toggleMenu()">
@@ -426,358 +1116,38 @@
     </button>
     
     <ul class="navbar-nav" id="navbarMenu">
-      <li class="nav-item active">
-        <a href="/">
-          <i class="fas fa-tachometer-alt"></i>
-          <span>Marketplace</span>
+      <li class="nav-item active" data-page="home">
+        <a href="#home">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="#frameworks">
-          <i class="far fa-address-book"></i>
-          <span>Frameworks</span>
+      <li class="nav-item" data-page="browse">
+        <a href="#browse">
+          <i class="fas fa-th"></i>
+          <span>Browse</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="#components">
-          <i class="far fa-clone"></i>
-          <span>Components</span>
+      <li class="nav-item" data-page="add">
+        <a href="#add">
+          <i class="fas fa-plus-circle"></i>
+          <span>Add</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="#docs">
-          <i class="far fa-copy"></i>
-          <span>Documentation</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="https://github.com/Sidcom-AB" target="_blank">
-          <i class="far fa-chart-bar"></i>
-          <span>GitHub</span>
+      <li class="nav-item" data-page="howto">
+        <a href="#howto">
+          <i class="fas fa-book-open"></i>
+          <span>How to</span>
         </a>
       </li>
       <div class="pill-selector"></div>
     </ul>
   </nav>
 
-  <div class="hero">
-    <h1>Aloha Framework Marketplace</h1>
-    <p>Discover and explore documentation for modern web frameworks</p>
-  </div>
+  <!-- SPA Content Container -->
+  <div id="app"></div>
 
-  <div class="search-container">
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search frameworks and documentation...">
-      <button onclick="searchFrameworks()">Search</button>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="section-header">
-      <h2>Featured Frameworks</h2>
-      <button class="add-button" onclick="openAddModal()">
-        <span>+</span> Add Framework
-      </button>
-    </div>
-
-    <div class="frameworks-grid" id="frameworksGrid">
-      <div class="loading"></div>
-    </div>
-  </div>
-
-  <!-- Add Framework Modal -->
-  <div class="modal" id="addModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Add Your Framework</h2>
-        <button class="close-button" onclick="closeAddModal()">&times;</button>
-      </div>
-      
-      <form id="addFrameworkForm">
-        <div class="form-group">
-          <label for="githubUrl">GitHub Repository URL</label>
-          <input type="url" id="githubUrl" required placeholder="https://github.com/owner/repo">
-          <small>We'll auto-discover your documentation</small>
-        </div>
-        
-        <div class="form-group">
-          <label for="customPath">Documentation Path (Optional)</label>
-          <input type="text" id="customPath" placeholder="docs">
-          <small>Leave empty for auto-discovery</small>
-        </div>
-
-        <div class="form-group">
-          <label for="githubToken">GitHub Token (For Private Repos)</label>
-          <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
-          <small>Only needed for private repositories. <a href="https://github.com/settings/tokens" target="_blank">Get a token</a></small>
-        </div>
-
-        <div id="discoverStatus"></div>
-        
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" onclick="discoverDocs()">Auto-Discover</button>
-          <button type="submit" class="btn btn-primary">Add Framework</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    let frameworks = [];
-    let modal = document.getElementById('addModal');
-    
-    // Navbar functionality
-    function toggleMenu() {
-      document.getElementById('navbarMenu').classList.toggle('active');
-    }
-    
-    // Initialize pill position with exact measurements
-    function updatePillPosition() {
-      const activeItem = document.querySelector('.nav-item.active');
-      const pillSelector = document.querySelector('.pill-selector');
-      
-      if (activeItem && pillSelector) {
-        // Get exact position and size using getBoundingClientRect for precision
-        const navRect = document.querySelector('.navbar-nav').getBoundingClientRect();
-        const itemRect = activeItem.getBoundingClientRect();
-        
-        // Calculate relative position within nav container
-        const itemLeft = itemRect.left - navRect.left;
-        const itemWidth = itemRect.width;
-        
-        // Apply with smooth transition
-        requestAnimationFrame(() => {
-          pillSelector.style.left = `${itemLeft}px`;
-          pillSelector.style.width = `${itemWidth}px`;
-        });
-      }
-    }
-    
-    // Update active nav item and pill position
-    document.querySelectorAll('.nav-item a').forEach(link => {
-      link.addEventListener('click', function(e) {
-        if (!this.getAttribute('href').startsWith('http')) {
-          e.preventDefault();
-        }
-        
-        // Remove active from all
-        document.querySelectorAll('.nav-item').forEach(item => {
-          item.classList.remove('active');
-        });
-        
-        // Add active to clicked
-        this.parentElement.classList.add('active');
-        
-        // Update pill position
-        updatePillPosition();
-      });
-    });
-    
-    // Initialize on load
-    window.addEventListener('load', updatePillPosition);
-    window.addEventListener('resize', updatePillPosition);
-
-    async function loadFrameworks() {
-      try {
-        const response = await fetch('/api/repositories');
-        frameworks = await response.json();
-        renderFrameworks();
-      } catch (error) {
-        console.error('Failed to load frameworks:', error);
-        document.getElementById('frameworksGrid').innerHTML = 
-          '<div class="empty-state"><h3>No frameworks yet</h3><p>Be the first to add a framework!</p></div>';
-      }
-    }
-
-    function renderFrameworks() {
-      const grid = document.getElementById('frameworksGrid');
-      
-      if (frameworks.length === 0) {
-        grid.innerHTML = `
-          <div class="empty-state">
-            <h3>No frameworks yet</h3>
-            <p>Be the first to add a framework to the marketplace!</p>
-          </div>
-        `;
-        return;
-      }
-
-      grid.innerHTML = frameworks.map(framework => `
-        <div class="framework-card" onclick="openFramework('${framework.id}')">
-          ${framework.validated ? '<div class="status-badge validated">Verified</div>' : 
-            '<div class="status-badge pending">Pending</div>'}
-          
-          <div class="framework-header">
-            <div class="framework-icon">📚</div>
-            <div class="framework-info">
-              <div class="framework-name">${framework.name}</div>
-              <div class="framework-url">${extractRepoName(framework.url)}</div>
-            </div>
-          </div>
-          
-          <div class="framework-description">
-            ${framework.description || 'Framework documentation and component library'}
-          </div>
-          
-          <div class="framework-stats">
-            <div class="stat">
-              <span class="stat-icon">📄</span>
-              <span>Docs</span>
-            </div>
-            <div class="stat">
-              <span class="stat-icon">🧩</span>
-              <span>Components</span>
-            </div>
-            ${framework.children && framework.children.length > 0 ? 
-              `<div class="stat">
-                <span class="stat-icon">🔗</span>
-                <span>${framework.children.length} Sub-frameworks</span>
-              </div>` : ''}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function extractRepoName(url) {
-      const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1] : url;
-    }
-
-    function openFramework(id) {
-      window.location.href = `/${id}`;
-    }
-
-    function openAddModal() {
-      modal.classList.add('active');
-    }
-
-    function closeAddModal() {
-      modal.classList.remove('active');
-      document.getElementById('addFrameworkForm').reset();
-      document.getElementById('discoverStatus').innerHTML = '';
-    }
-
-    async function discoverDocs() {
-      const url = document.getElementById('githubUrl').value;
-      const customPath = document.getElementById('customPath').value;
-      const token = document.getElementById('githubToken').value;
-      
-      if (!url) {
-        alert('Please enter a GitHub URL');
-        return;
-      }
-
-      const statusDiv = document.getElementById('discoverStatus');
-      statusDiv.innerHTML = '<div class="loading"></div> Discovering documentation...';
-
-      try {
-        const response = await fetch('/api/discover', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, customPath, token })
-        });
-
-        const result = await response.json();
-        
-        if (response.ok && result.found) {
-          statusDiv.className = 'discover-status success';
-          statusDiv.innerHTML = `
-            <strong>✅ Documentation found!</strong>
-            <p>Path: ${result.path}</p>
-            <p>Title: ${result.metadata?.title || 'Unknown'}</p>
-          `;
-          
-          // Auto-fill form if metadata found
-          if (result.metadata) {
-            // You could add more fields here if needed
-          }
-        } else {
-          statusDiv.className = 'discover-status error';
-          statusDiv.innerHTML = `
-            <strong>❌ No documentation found</strong>
-            <p>${result.error || 'Please specify the documentation path manually'}</p>
-          `;
-        }
-      } catch (error) {
-        statusDiv.className = 'discover-status error';
-        statusDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
-      }
-    }
-
-    async function searchFrameworks() {
-      const query = document.getElementById('searchInput').value;
-      if (!query) return;
-
-      try {
-        const response = await fetch('/api/mcp/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-
-        const results = await response.json();
-        console.log('Search results:', results);
-        // TODO: Display search results
-      } catch (error) {
-        console.error('Search failed:', error);
-      }
-    }
-
-    document.getElementById('addFrameworkForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const url = document.getElementById('githubUrl').value;
-      const customPath = document.getElementById('customPath').value;
-      const token = document.getElementById('githubToken').value;
-      
-      // Generate ID from URL
-      const repoMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-      if (!repoMatch) {
-        alert('Invalid GitHub URL');
-        return;
-      }
-      
-      const id = repoMatch[2].toLowerCase();
-      const name = repoMatch[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      
-      const data = {
-        id,
-        name,
-        url: customPath ? `${url}/tree/main/${customPath}` : url,
-        description: `Documentation for ${name}`,
-        token: token || null,
-        enabled: true
-      };
-
-      try {
-        const response = await fetch('/api/repos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-        
-        if (response.ok) {
-          closeAddModal();
-          loadFrameworks();
-        } else {
-          alert(`Error: ${result.error}`);
-        }
-      } catch (error) {
-        alert(`Error: ${error.message}`);
-      }
-    });
-
-    // Load frameworks on page load
-    loadFrameworks();
-    
-    // Close modal on outside click
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        closeAddModal();
-      }
-    });
-  </script>
+  <!-- Load SPA Modules -->
+  <script type="module" src="js/marketplace.js"></script>
 </body>
 </html>

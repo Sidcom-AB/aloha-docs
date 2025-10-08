@@ -1,4 +1,4 @@
-# 🍍 Aloha Framework Marketplace
+# 🍍 Aloha Docs
 
 **A modern documentation marketplace for web frameworks with AI-first MCP integration**
 

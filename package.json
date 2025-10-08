@@ -1,7 +1,7 @@
 {
-  "name": "aloha-framework-docs",
+  "name": "aloha-docs",
   "version": "1.0.0",
-  "description": "AI-first component documentation system with MCP server",
+  "description": "AI-first documentation marketplace with MCP server",
   "main": "server/index.js",
   "type": "module",
   "scripts": {

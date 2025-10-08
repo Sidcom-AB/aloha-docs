@@ -71,15 +71,15 @@ wss.on('connection', (ws) => {
 });
 
 async function init() {
-  console.log('Starting Aloha Framework Marketplace...');
+  console.log('Starting Aloha Docs...');
   console.log('Loading repository configuration...');
-  
+
   // Initialize multi-repository system
   await repositoryManager.initialize();
   await mcpRouter.initialize();
-  
+
   server.listen(config.port, () => {
-    console.log(`\n🚀 Aloha Framework Marketplace`);
+    console.log(`\n🚀 Aloha Docs`);
     console.log(`✨ Server running at http://localhost:${config.port}`);
     console.log(`📡 MCP WebSocket at ws://localhost:${config.port}`);
     
