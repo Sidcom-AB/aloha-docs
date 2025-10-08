@@ -340,17 +340,81 @@ setInterval(async () => {
 - **Solution:** Automatic reload during initialization
 - **Mitigation:** Could add persistent cache layer (optional)
 
-## Future Enhancements
+## Persistent Cache (✅ Implemented)
 
-### 1. Persistent Cache (Optional)
-Store cache to disk between restarts:
+The document cache is **automatically persisted to disk** in `/config/cache/documents.json`.
+
+### How It Works
+
+**On Initialization:**
 ```javascript
-// On shutdown
-await documentCache.saveToDisk('./cache/docs.json');
-
-// On startup
-await documentCache.loadFromDisk('./cache/docs.json');
+1. Try to load cache from disk
+2. If cache exists and valid → use it (instant startup!)
+3. If cache missing/invalid → download from GitHub
+4. Save to disk for next restart
 ```
+
+**On Adding Repository:**
+```javascript
+1. Download all documents
+2. Cache in memory
+3. Save to disk immediately
+```
+
+**On Refresh:**
+```javascript
+1. Re-download documents
+2. Update memory cache
+3. Save to disk
+```
+
+### Cache Invalidation
+
+Cache is automatically invalidated if:
+- **Version mismatch** - Cache format changed
+- **Too old** - Cache older than 7 days
+- **Corrupted** - JSON parse error
+
+### Benefits
+
+✅ **Instant restart** - No GitHub API calls on server restart
+✅ **Persistent across deploys** - `/config` is persistent on server
+✅ **Automatic** - No manual management needed
+✅ **Safe** - Validates version and age
+
+### File Location
+
+```
+config/
+├── repositories.json       # Repository configuration
+└── cache/
+    ├── index.json          # Cache index (metadata + pointers, human-readable)
+    ├── aloha-docs.cache    # Compressed binary cache (gzip)
+    ├── sample-framework.cache  # Each repo = one .cache file
+    └── webawesome-docs.cache   # Binary, not human-readable
+```
+
+**Benefits:**
+- 📁 **One file per repo** - Easy to manage, delete, or update
+- 🗜️ **Compressed** - Gzip compression (~70-80% smaller!)
+- 🚀 **Faster saves** - Only save changed repo, not everything
+- 🧹 **Auto cleanup** - Orphaned files automatically removed
+- 📊 **Scalable** - 1000 repos = 1000 files (not 1 giant file)
+- 💾 **Smaller footprint** - 5MB text → ~1MB compressed
+
+**Example:**
+```bash
+# Before compression (JSON)
+aloha-docs.json: 5.2 MB
+
+# After compression (gzip)
+aloha-docs.cache: 1.1 MB (79% smaller!)
+```
+
+**Note:**
+- `config/cache/` is in `.gitignore` - never committed to git
+- `.cache` files are binary (gzip compressed), not human-readable
+- `index.json` is still readable for debugging
 
 ### 2. Incremental Updates
 Only fetch changed files:

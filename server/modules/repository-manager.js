@@ -24,16 +24,69 @@ export class RepositoryManager {
 
     try {
       await this.loadConfiguration();
-      await this.validateAllRepositories();
 
-      // Build search index after repositories are validated
-      await this.searchEngine.rebuildIndex(this);
+      // Try to load cache from disk first
+      const cacheLoaded = await this.documentCache.loadFromDisk();
+
+      if (cacheLoaded.success) {
+        console.log(`[RepositoryManager] Loaded ${cacheLoaded.documentCount} documents from persistent cache (${cacheLoaded.cacheAge}h old)`);
+
+        // Still validate repositories to get structure
+        await this.validateAllRepositories();
+
+        // Build search index from cached documents (fast!)
+        await this.buildSearchIndexFromCache();
+      } else {
+        console.log(`[RepositoryManager] Cache load failed (${cacheLoaded.reason}), building fresh...`);
+
+        // Validate and download all documents
+        await this.validateAllRepositories();
+
+        // Build search index from newly downloaded docs
+        await this.searchEngine.rebuildIndex(this);
+
+        // Save to disk for next restart
+        await this.documentCache.saveToDisk();
+      }
 
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize RepositoryManager:', error);
       throw error;
     }
+  }
+
+  /**
+   * Build search index from already cached documents (no downloading)
+   */
+  async buildSearchIndexFromCache() {
+    console.log('[RepositoryManager] Building search index from cached documents...');
+
+    const repos = Array.from(this.repositories.values());
+    const indexPromises = [];
+
+    for (const repo of repos) {
+      if (repo.validated && repo.enabled && repo.structure) {
+        const loadDocFn = async (file) => {
+          const cached = this.documentCache.get(repo.id, file);
+          if (!cached) {
+            console.warn(`[RepositoryManager] Document ${file} not in cache for ${repo.id}`);
+          }
+          return cached || '';
+        };
+
+        indexPromises.push(
+          this.searchEngine.indexRepository(repo.id, repo.structure, loadDocFn)
+            .catch(error => {
+              console.error(`[RepositoryManager] Failed to index ${repo.id}:`, error.message);
+              return 0;
+            })
+        );
+      }
+    }
+
+    await Promise.all(indexPromises);
+    console.log('[RepositoryManager] Search index built from cache');
   }
 
   async loadConfiguration() {
@@ -258,6 +311,9 @@ export class RepositoryManager {
     await this.searchEngine.indexRepository(repo.id, repo.structure, loadDocFn);
 
     console.log(`[RepositoryManager] Cached ${Object.keys(documents).length} documents for ${repo.id}`);
+
+    // Save only this repository to disk (faster than full save)
+    await this.documentCache.saveRepository(repo.id);
   }
 
   getRepository(id) {
@@ -382,6 +438,9 @@ export class RepositoryManager {
     const validation = await this.validateRepository(repo);
 
     if (validation.valid) {
+      // Save only this repository to disk (faster than full save)
+      await this.documentCache.saveRepository(repositoryId);
+
       console.log(`[RepositoryManager] Successfully refreshed ${repositoryId}`);
       return {
         success: true,

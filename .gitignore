@@ -5,3 +5,6 @@ node_modules/
 dist/
 build/
 .cache/
+
+# Document cache (persistent on server, not in git)
+config/cache/
