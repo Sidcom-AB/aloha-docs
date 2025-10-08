@@ -419,6 +419,53 @@ export class RepositoryManager {
   }
 
   /**
+   * Get all documents for a repository from its structure
+   * Returns array of { repositoryId, repositoryName, file, title, description, section }
+   */
+  getAllDocuments(repositoryId = null) {
+    const documents = [];
+
+    if (repositoryId) {
+      // Get documents for specific repository
+      const repo = this.getRepository(repositoryId);
+      if (!repo || !repo.structure) return documents;
+
+      this._collectDocumentsFromStructure(repo, documents);
+    } else {
+      // Get documents from all repositories
+      for (const [_, repo] of this.repositories) {
+        if (repo.validated && repo.enabled && repo.structure) {
+          this._collectDocumentsFromStructure(repo, documents);
+        }
+      }
+    }
+
+    return documents;
+  }
+
+  /**
+   * Helper to collect documents from a repository's structure
+   */
+  _collectDocumentsFromStructure(repo, documents) {
+    const categories = repo.structure.categories || [];
+
+    for (const category of categories) {
+      if (category.items) {
+        for (const item of category.items) {
+          documents.push({
+            repositoryId: repo.id,
+            repositoryName: repo.name,
+            file: item.file,
+            title: item.title,
+            description: item.description || '',
+            section: category.title
+          });
+        }
+      }
+    }
+  }
+
+  /**
    * Refresh a repository - reload and re-cache all documents
    * Use this to update docs from GitHub or local changes
    */

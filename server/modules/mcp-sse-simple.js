@@ -126,21 +126,19 @@ export class MCPSSESimple {
       );
     }
 
-    // Register all resources using SDK's resource() method
-    const resourcesResponse = await this.mcpHandler.listResources(null); // id not needed for getting list
-    const allResources = resourcesResponse.result.resources;
-
-    // Filter resources based on context
+    // Get documents directly from repository manager based on context
     const resourceFilter = MCPContext.getResourceFilter(context);
-    const resources = allResources.filter(r => {
-      // Extract frameworkId from URI: doc://frameworkId/path/to/file.md
-      const uriPath = r.uri.replace('doc://', '');
-      const firstSlash = uriPath.indexOf('/');
-      const frameworkId = uriPath.substring(0, firstSlash);
-      return frameworkId === resourceFilter;
-    });
+    const allDocs = this.mcpHandler.docsLoader.getAllDocuments(resourceFilter);
 
-    console.log(`[MCP SSE SDK] Registering ${resources.length} resources for context: ${context} (filtered from ${allResources.length} total)...`);
+    console.log(`[MCP SSE SDK] Registering ${allDocs.length} resources for context: ${context}...`);
+
+    // Convert documents to resources
+    const resources = allDocs.map(doc => ({
+      uri: `doc://${doc.repositoryId}/${doc.file}`,
+      name: doc.title,
+      description: doc.description || `${doc.title} documentation`,
+      mimeType: 'text/markdown'
+    }));
 
     for (const resource of resources) {
       server.resource(
@@ -183,7 +181,6 @@ export class MCPSSESimple {
     }
 
     console.log(`[MCP SSE SDK] Successfully registered ${resources.length} resources`);
-
 
     return server;
   }

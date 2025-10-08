@@ -316,15 +316,14 @@ export class MCPHandler {
   async listResources(id) {
     const resources = [];
 
-    // Get all documents from searchEngine (which has them indexed)
-    // Search with empty query to get all documents
-    const allDocs = await this.docsLoader.searchDocuments('', null, 10000); // Get up to 10000 docs
+    // Get all documents directly from repository structures
+    const allDocs = this.docsLoader.getAllDocuments();
 
     // Convert each document to a resource
     for (const doc of allDocs) {
       resources.push({
         uri: `doc://${doc.repositoryId}/${doc.file}`,
-        name: `${doc.repositoryName}: ${doc.title}`,
+        name: doc.title,
         description: doc.description || `${doc.title} documentation`,
         mimeType: 'text/markdown'
       });
