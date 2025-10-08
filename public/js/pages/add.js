@@ -119,29 +119,21 @@ export default {
   renderStep2() {
     return `
       <div class="wizard-step-content">
-        <h2>Configuration</h2>
-        <p class="step-description">Customize your framework's settings</p>
-
-        <div class="form-group">
-          <label for="customPath">Documentation Path</label>
-          <input type="text" id="customPath"
-                 placeholder="docs"
-                 value="${this.formData.customPath || ''}">
-          <small>Leave empty for auto-discovery</small>
-        </div>
-
-        <div class="form-group">
-          <label>
-            <input type="checkbox" id="autoDiscover" ${this.formData.autoDiscover !== false ? 'checked' : ''}>
-            Enable Auto-Discovery
-          </label>
-          <small>Automatically find and organize documentation files</small>
-        </div>
+        <h2>Auto-Discovery</h2>
+        <p class="step-description">We'll automatically find and organize your documentation</p>
 
         <div id="discoverStatus" class="discover-status"></div>
 
-        <button type="button" class="btn btn-secondary" id="testDiscovery">
-          <i class="fas fa-search"></i> Test Auto-Discovery
+        <div class="form-group" style="margin-top: 2rem;">
+          <label for="customPath">Custom Documentation Path (optional)</label>
+          <input type="text" id="customPath"
+                 placeholder="e.g., docs, documentation, website/docs"
+                 value="${this.formData.customPath || ''}">
+          <small>Only specify if auto-discovery doesn't find your docs</small>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="retryDiscovery" style="margin-top: 1rem;">
+          <i class="fas fa-sync"></i> Re-run Discovery
         </button>
       </div>
     `;
@@ -159,18 +151,21 @@ export default {
           <p><strong>Token:</strong> ${this.formData.githubToken ? '✅ Provided' : '❌ Not provided'}</p>
         </div>
 
-        <div class="review-card">
-          <h3>Configuration</h3>
-          <p><strong>Documentation Path:</strong> ${this.formData.customPath || 'Auto-discover'}</p>
-          <p><strong>Auto-Discovery:</strong> ${this.formData.autoDiscover !== false ? '✅ Enabled' : '❌ Disabled'}</p>
-        </div>
-
         ${this.formData.discoveryResult ? `
         <div class="review-card">
           <h3>Discovery Result</h3>
-          <p><strong>Status:</strong> ${this.formData.discoveryResult.found ? '✅ Success' : '❌ Failed'}</p>
-          ${this.formData.discoveryResult.path ? `<p><strong>Path:</strong> ${this.formData.discoveryResult.path}</p>` : ''}
+          <p><strong>Status:</strong> ${this.formData.discoveryResult.found ? '✅ Documentation Found' : '❌ Not Found'}</p>
+          ${this.formData.discoveryResult.path ? `<p><strong>Path:</strong> ${this.formData.discoveryResult.path || 'root'}</p>` : ''}
           ${this.formData.discoveryResult.metadata?.title ? `<p><strong>Title:</strong> ${this.formData.discoveryResult.metadata.title}</p>` : ''}
+          ${this.formData.discoveryResult.metadata?.description ? `<p><strong>Description:</strong> ${this.formData.discoveryResult.metadata.description}</p>` : ''}
+        </div>
+        ` : ''}
+
+        ${this.formData.customPath ? `
+        <div class="review-card">
+          <h3>Custom Path</h3>
+          <p><strong>Path Override:</strong> ${this.formData.customPath}</p>
+          <small>This will be used instead of auto-discovered path</small>
         </div>
         ` : ''}
       </div>
@@ -178,7 +173,9 @@ export default {
   },
 
   setupStep2() {
-    document.getElementById('testDiscovery')?.addEventListener('click', () => this.testDiscovery());
+    document.getElementById('retryDiscovery')?.addEventListener('click', () => this.testDiscovery());
+    // Auto-run discovery when entering step 2
+    this.testDiscovery();
   },
 
   async testDiscovery() {
@@ -236,8 +233,7 @@ export default {
       this.formData.githubUrl = url;
       this.formData.githubToken = document.getElementById('githubToken').value;
     } else if (this.currentStep === 2) {
-      this.formData.customPath = document.getElementById('customPath').value;
-      this.formData.autoDiscover = document.getElementById('autoDiscover').checked;
+      this.formData.customPath = document.getElementById('customPath')?.value || '';
     } else if (this.currentStep === 3) {
       await this.submitForm();
       return;
@@ -353,13 +349,21 @@ export default {
       return;
     }
 
-    const id = repoMatch[2].toLowerCase();
-    const name = repoMatch[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const owner = repoMatch[1];
+    const repoName = repoMatch[2].replace(/\.git$/, ''); // Remove .git if present
+    const id = `${owner}-${repoName}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const name = repoName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    // Build URL - only add custom path if specified
+    let finalUrl = url.replace(/\/$/, ''); // Remove trailing slash
+    if (customPath) {
+      finalUrl = `${finalUrl}/tree/main/${customPath}`;
+    }
 
     const data = {
       id,
       name,
-      url: customPath ? `${url}/tree/main/${customPath}` : url,
+      url: finalUrl,
       description: `Documentation for ${name}`,
       token: token || null,
       enabled: true

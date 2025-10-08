@@ -200,8 +200,8 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
         return res.status(400).json({ error: 'URL is required' });
       }
 
-      // Create discovery instance with token if provided
-      const discoveryInstance = new GitHubDiscovery(token || null);
+      // Create discovery instance with token (from request or env)
+      const discoveryInstance = new GitHubDiscovery(token || process.env.GITHUB_TOKEN);
       const result = await discoveryInstance.discoverRepository(url, customPath);
 
       // Check if the error indicates authentication is required

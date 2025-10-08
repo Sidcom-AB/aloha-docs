@@ -79,6 +79,17 @@ export class RepositoryManager {
       parsed = this.localLoader.parseLocalUrl(config.url);
     } else {
       parsed = this.githubLoader.parseGitHubUrl(config.url);
+
+      // Fetch actual default branch if we defaulted to 'main'
+      if (parsed.branch === 'main' && !config.url.includes('/tree/')) {
+        try {
+          const actualBranch = await this.githubLoader.getDefaultBranch(parsed.owner, parsed.repo);
+          parsed.branch = actualBranch;
+          console.log(`[RepositoryManager] Detected default branch: ${actualBranch} for ${parsed.owner}/${parsed.repo}`);
+        } catch (error) {
+          console.warn(`[RepositoryManager] Could not fetch default branch, using 'main':`, error.message);
+        }
+      }
     }
 
     const repository = {

@@ -87,27 +87,80 @@ export class GitHubDiscovery {
   }
 
   async autoDiscover(parsed) {
-    // First, try to find README in root to extract metadata
-    const metadata = await this.extractMetadata(parsed);
+    // First, get the root directory listing (1 API call)
+    console.log(`[Discovery] Fetching root directory for ${parsed.owner}/${parsed.repo}`);
+    let rootContents;
+    try {
+      rootContents = await this.loader.loadDirectory(
+        parsed.owner,
+        parsed.repo,
+        parsed.branch,
+        ''
+      );
+    } catch (error) {
+      console.error(`[Discovery] Failed to load root directory:`, error.message);
+      return null;
+    }
 
-    // Try common documentation paths
-    for (const docPath of this.commonDocPaths) {
-      const result = await this.validatePath(parsed, docPath);
+    // Extract metadata from README/package.json (reuse root listing)
+    const metadata = await this.extractMetadataFromContents(parsed, rootContents);
+
+    // Check common doc paths that exist in root listing
+    const docDirs = rootContents
+      .filter(item => item.type === 'dir')
+      .map(item => item.name);
+
+    // Try paths in order of likelihood, but only if they exist
+    const priorityPaths = ['docs', 'documentation', 'doc'];
+    for (const path of priorityPaths) {
+      if (docDirs.includes(path)) {
+        console.log(`[Discovery] Found common doc folder: ${path}`);
+        const result = await this.validatePath(parsed, path);
+        if (result.valid) {
+          return {
+            path,
+            metadata: { ...metadata, ...result.metadata },
+            structure: result.structure
+          };
+        }
+      }
+    }
+
+    // Try other doc-related folders found in root
+    const docRelatedFolders = docDirs.filter(name =>
+      /^(docs|documentation|doc|content|pages|website|guide|manual)/i.test(name)
+    );
+
+    for (const folder of docRelatedFolders) {
+      console.log(`[Discovery] Trying doc-related folder: ${folder}`);
+      const result = await this.validatePath(parsed, folder);
       if (result.valid) {
         return {
-          path: docPath,
+          path: folder,
           metadata: { ...metadata, ...result.metadata },
-          tableOfContents: result.tableOfContents
+          structure: result.structure
         };
       }
     }
 
-    // Look for any folder containing documentation
-    const searchResult = await this.searchForDocumentation(parsed);
-    if (searchResult) {
-      return searchResult;
+    // Check if root has markdown files directly
+    const markdownFiles = rootContents.filter(item =>
+      item.type === 'file' && item.name.endsWith('.md') && !item.name.match(/^(README|LICENSE|CHANGELOG)/i)
+    );
+
+    if (markdownFiles.length > 0) {
+      console.log(`[Discovery] Found ${markdownFiles.length} markdown files in root`);
+      const result = await this.validatePath(parsed, '');
+      if (result.valid) {
+        return {
+          path: '',
+          metadata,
+          structure: result.structure
+        };
+      }
     }
 
+    console.log(`[Discovery] No documentation found in common locations`);
     return null;
   }
 
@@ -136,47 +189,78 @@ export class GitHubDiscovery {
     }
   }
 
-  async searchForDocumentation(parsed, searchPath = '', depth = 0) {
-    if (depth > 3) return null; // Limit search depth
+  async extractMetadataFromContents(parsed, rootContents) {
+    const metadata = {};
 
-    try {
-      // Use auto-discovery to find documentation
-      const discovery = new AutoDiscovery(this.loader.token);
-      const result = await discovery.validateRepository(
-        parsed.owner,
-        parsed.repo,
-        parsed.branch,
-        searchPath
-      );
+    // Look for README in root contents
+    const readmeFile = rootContents.find(item =>
+      item.type === 'file' && /^readme\.md$/i.test(item.name)
+    );
 
-      if (result.valid) {
-        return {
-          path: searchPath || 'root',
-          metadata: result.metadata,
-          structure: result.structure
-        };
-      }
+    if (readmeFile) {
+      try {
+        const readme = await this.loader.loadFile(
+          parsed.owner,
+          parsed.repo,
+          parsed.branch,
+          readmeFile.name
+        );
 
-      // If not valid at this level, search subdirectories
-      const contents = await this.loader.loadDirectory(
-        parsed.owner,
-        parsed.repo,
-        parsed.branch,
-        searchPath
-      );
-
-      for (const item of contents) {
-        if (item.type === 'dir' && !item.name.startsWith('.') && !item.name.includes('node_modules')) {
-          const subPath = searchPath ? `${searchPath}/${item.name}` : item.name;
-          const subResult = await this.searchForDocumentation(parsed, subPath, depth + 1);
-          if (subResult) return subResult;
+        // Extract title from first H1
+        const titleMatch = readme.match(/^#\s+(.+)$/m);
+        if (titleMatch) {
+          metadata.title = titleMatch[1].trim();
         }
+
+        // Extract description from first paragraph
+        const lines = readme.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (line && !line.startsWith('#') && !line.startsWith('!') && !line.startsWith('[')) {
+            metadata.description = line;
+            break;
+          }
+        }
+      } catch (e) {
+        // Failed to load README
       }
-    } catch (error) {
-      // Directory doesn't exist or isn't accessible
     }
 
-    return null;
+    // Look for package.json
+    const packageFile = rootContents.find(item =>
+      item.type === 'file' && item.name === 'package.json'
+    );
+
+    if (packageFile) {
+      try {
+        const packageJson = await this.loader.loadFile(
+          parsed.owner,
+          parsed.repo,
+          parsed.branch,
+          'package.json'
+        );
+        const pkg = JSON.parse(packageJson);
+
+        if (!metadata.title && pkg.name) {
+          metadata.title = pkg.name;
+        }
+        if (!metadata.description && pkg.description) {
+          metadata.description = pkg.description;
+        }
+        if (pkg.version) {
+          metadata.version = pkg.version;
+        }
+      } catch (e) {
+        // Failed to parse package.json
+      }
+    }
+
+    // Fallback to repo name
+    if (!metadata.title) {
+      metadata.title = parsed.repo.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    return metadata;
   }
 
   async extractMetadata(parsed) {

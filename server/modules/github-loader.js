@@ -6,6 +6,11 @@ export class GitHubLoader {
     this.token = token;
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+    if (this.token) {
+      console.log(`[GitHubLoader] Using authenticated requests (token: ${this.token.substring(0, 10)}...)`);
+    } else {
+      console.log(`[GitHubLoader] WARNING: No token provided - using unauthenticated requests (60 req/hour limit)`);
+    }
   }
 
   async getDefaultBranch(owner, repo) {
@@ -62,19 +67,36 @@ export class GitHubLoader {
   }
 
   parseGitHubUrl(url) {
-    const regex = /github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.*)/;
-    const match = url.match(regex);
-    
-    if (!match) {
-      throw new Error('Invalid GitHub URL format');
+    // Remove trailing slashes
+    url = url.replace(/\/+$/, '');
+
+    // Format: https://github.com/owner/repo/tree/branch/path
+    const treeRegex = /github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)(?:\/(.*))?/;
+    const treeMatch = url.match(treeRegex);
+
+    if (treeMatch) {
+      return {
+        owner: treeMatch[1],
+        repo: treeMatch[2],
+        branch: treeMatch[3],
+        path: treeMatch[4] || ''
+      };
     }
 
-    return {
-      owner: match[1],
-      repo: match[2],
-      branch: match[3],
-      path: match[4] || ''
-    };
+    // Format: https://github.com/owner/repo
+    const simpleRegex = /github\.com\/([^\/]+)\/([^\/]+)$/;
+    const simpleMatch = url.match(simpleRegex);
+
+    if (simpleMatch) {
+      return {
+        owner: simpleMatch[1],
+        repo: simpleMatch[2],
+        branch: 'main', // Default branch, will be detected later
+        path: ''
+      };
+    }
+
+    throw new Error('Invalid GitHub URL format. Expected: https://github.com/owner/repo or https://github.com/owner/repo/tree/branch/path');
   }
 
   async fetchFromGitHub(owner, repo, branch, path) {
