@@ -89,9 +89,9 @@ export class MCPSSESimple {
       }
     );
 
-    // Get tool definitions from our handler
-    const toolsResponse = this.mcpHandler.listTools();
-    const tools = toolsResponse.result.tools;
+    // Get context-aware tools
+    const tools = MCPContext.getToolsForContext(context);
+    console.log(`[MCP SSE SDK] Registering ${tools.length} tools for context: ${context}`);
 
     // Register each tool with the SDK
     for (const tool of tools) {
@@ -103,8 +103,11 @@ export class MCPSSESimple {
         tool.description,
         zodSchema,
         async (params) => {
+          // Adapt tool call for context (inject frameworkId if needed)
+          const adaptedParams = MCPContext.adaptToolCall(tool.name, params, context);
+
           // Call our handler's tool implementation
-          const response = await this.mcpHandler.callTool({ name: tool.name, arguments: params });
+          const response = await this.mcpHandler.callTool({ name: tool.name, arguments: adaptedParams });
 
           // SDK expects { content: [{ type: 'text', text: '...' }] } format
           // Our handler returns the JSON-RPC response with result.content already formatted
@@ -125,9 +128,19 @@ export class MCPSSESimple {
 
     // Register all resources using SDK's resource() method
     const resourcesResponse = await this.mcpHandler.listResources(null); // id not needed for getting list
-    const resources = resourcesResponse.result.resources;
+    const allResources = resourcesResponse.result.resources;
 
-    console.log(`[MCP SSE SDK] Registering ${resources.length} resources...`);
+    // Filter resources based on context
+    const resourceFilter = MCPContext.getResourceFilter(context);
+    const resources = allResources.filter(r => {
+      // Extract frameworkId from URI: doc://frameworkId/path/to/file.md
+      const uriPath = r.uri.replace('doc://', '');
+      const firstSlash = uriPath.indexOf('/');
+      const frameworkId = uriPath.substring(0, firstSlash);
+      return frameworkId === resourceFilter;
+    });
+
+    console.log(`[MCP SSE SDK] Registering ${resources.length} resources for context: ${context} (filtered from ${allResources.length} total)...`);
 
     for (const resource of resources) {
       server.resource(
@@ -176,12 +189,19 @@ export class MCPSSESimple {
   }
 
   /**
-   * Handle SSE connection (GET /sse)
+   * Handle SSE connection (GET /sse or GET /:frameworkId/sse)
    */
   async handleSSE(req, res) {
     console.log('[MCP SSE SDK] Client connecting...');
 
     try {
+      // Extract context from URL path
+      // Path can be /sse (root) or /:frameworkId/sse (framework)
+      const pathParts = req.path.split('/').filter(p => p);
+      const context = pathParts.length === 1 ? 'root' : pathParts[0];
+
+      console.log(`[MCP SSE SDK] Context: ${context}`);
+
       // Create SSE transport with /mcp/message as the POST endpoint
       const transport = new SSEServerTransport('/mcp/message', res);
       const sessionId = transport.sessionId;
@@ -195,8 +215,8 @@ export class MCPSSESimple {
         this.transports.delete(sessionId);
       };
 
-      // Create new server instance and connect transport
-      const server = await this.createServer();
+      // Create new server instance with context and connect transport
+      const server = await this.createServer(context);
       await server.connect(transport);
 
       console.log(`[MCP SSE SDK] Session ${sessionId} connected successfully!`);

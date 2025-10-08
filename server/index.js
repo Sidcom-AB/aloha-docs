@@ -36,8 +36,13 @@ app.use('/css', express.static('public/css'));
 app.use('/js', express.static('public/js'));
 app.use('/assets', express.static('public/assets'));
 
-// SSE endpoint for remote MCP access
+// SSE endpoint for remote MCP access (root context)
 app.get('/sse', async (req, res) => {
+  await mcpSSE.handleSSE(req, res);
+});
+
+// SSE endpoint for framework-specific MCP access
+app.get('/:frameworkId/sse', async (req, res) => {
   await mcpSSE.handleSSE(req, res);
 });
 
