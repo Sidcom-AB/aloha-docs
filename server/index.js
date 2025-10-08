@@ -4,6 +4,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { config } from './modules/config.js';
 import { MCPHandler } from './modules/mcp-handler.js';
+import { MCPSSETransport } from './modules/mcp-sse-transport.js';
 import { SearchEngine } from './modules/search-engine.js';
 import { apiRouter } from './modules/api-router.js';
 import { RepositoryManager } from './modules/repository-manager.js';
@@ -19,6 +20,7 @@ const repositoryManager = new RepositoryManager();
 const mcpRouter = new MCPRouter();
 const docValidator = new DocValidator();
 const mcpHandler = new MCPHandler(searchEngine, repositoryManager);
+const mcpSSE = new MCPSSETransport(mcpHandler);
 
 // Track WebSocket clients for reload notifications
 const wsClients = new Set();
@@ -34,12 +36,44 @@ app.use('/css', express.static('public/css'));
 app.use('/js', express.static('public/js'));
 app.use('/assets', express.static('public/assets'));
 
+// SSE endpoint for remote MCP access (all repositories)
+app.get('/sse', (req, res) => {
+  mcpSSE.handleConnection(req, res, null);
+});
+
+// SSE endpoint for scoped repository access
+app.get('/:repositoryId/sse', (req, res) => {
+  const { repositoryId } = req.params;
+  mcpSSE.handleConnection(req, res, repositoryId);
+});
+
+// MCP message endpoint (for SSE transport)
+app.post('/mcp/message', async (req, res) => {
+  await mcpSSE.handleMessage(req, res, null);
+});
+
+// MCP message endpoint for scoped repository
+app.post('/:repositoryId/mcp/message', async (req, res) => {
+  const { repositoryId } = req.params;
+  await mcpSSE.handleMessage(req, res, repositoryId);
+});
+
 // Root route - serve marketplace
 app.get('/', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
-// Framework viewer route - all other routes
+// Serve markdown files from root only (not framework sub-paths)
+app.get('/*.md', (req, res) => {
+  res.sendFile(req.path, { root: 'public' });
+});
+
+// Framework viewer route - match framework and any sub-paths
+app.get('/:frameworkId/*', (req, res) => {
+  res.sendFile('framework.html', { root: 'public' });
+});
+
+// Framework viewer route - framework root
 app.get('/:frameworkId', (req, res) => {
   res.sendFile('framework.html', { root: 'public' });
 });
@@ -82,13 +116,14 @@ async function init() {
     console.log(`\n🚀 Aloha Docs`);
     console.log(`✨ Server running at http://localhost:${config.port}`);
     console.log(`📡 MCP WebSocket at ws://localhost:${config.port}`);
-    
+    console.log(`🌐 MCP SSE Remote at http://localhost:${config.port}/sse`);
+
     const repos = repositoryManager.getRepositoryHierarchy();
     console.log(`\n📦 Active frameworks: ${repos.length}`);
     repos.forEach(repo => {
       console.log(`  - ${repo.name}: ${repo.validated ? '✅' : '⏳'} ${repo.url}`);
     });
-    
+
     console.log(`\nAPI Endpoints:`);
     console.log(`  GET  /                  - Framework marketplace`);
     console.log(`  GET  /api/repositories  - List all frameworks`);
@@ -96,6 +131,9 @@ async function init() {
     console.log(`  POST /api/discover      - Auto-discover docs in repo`);
     console.log(`  GET  /api/mcp/*         - MCP routing`);
     console.log(`  POST /api/search        - Search across frameworks`);
+    console.log(`\nMCP Remote Access:`);
+    console.log(`  GET  /sse               - SSE endpoint for remote clients`);
+    console.log(`  POST /mcp/message       - MCP message handler`);
   });
 }
 

@@ -8,6 +8,59 @@ export class GitHubLoader {
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
   }
 
+  async getDefaultBranch(owner, repo) {
+    const cacheKey = `branch:${owner}/${repo}`;
+
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < this.cacheTimeout) {
+        return cached.data;
+      }
+    }
+
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
+
+    const options = {
+      headers: {
+        'User-Agent': 'Aloha-Framework-Docs',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    };
+
+    if (this.token) {
+      options.headers['Authorization'] = `token ${this.token}`;
+    }
+
+    return new Promise((resolve, reject) => {
+      https.get(apiUrl, options, (res) => {
+        let data = '';
+
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`GitHub API error: ${res.statusCode} - ${data}`));
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+            const branch = parsed.default_branch || 'main';
+            this.cache.set(cacheKey, {
+              data: branch,
+              timestamp: Date.now()
+            });
+            resolve(branch);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }).on('error', reject);
+    });
+  }
+
   parseGitHubUrl(url) {
     const regex = /github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.*)/;
     const match = url.match(regex);

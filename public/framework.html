@@ -5,52 +5,157 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Framework Documentation</title>
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/navbar-pill-v2.css">
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/syntax.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      background: linear-gradient(135deg, #0a0e27 0%, #151932 100%);
-      color: #ffffff;
-      min-height: 100vh;
+    html, body {
+      margin: 0;
+      padding: 0;
     }
-    
-    .back-button {
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--color-text-light);
+    }
+
+    /* Page wrapper with background */
+    #page-wrapper {
+      min-height: 100vh;
+      background: linear-gradient(135deg, rgba(10, 14, 39, 0.7) 0%, rgba(21, 25, 50, 0.7) 100%),
+                  url('/assets/bg2.jpg') center top;
+      background-size: cover;
+      background-attachment: fixed;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 14, 39, 0.5);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+      border-radius: 10px;
+      border: 2px solid rgba(10, 14, 39, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--color-accent-hover) 0%, var(--color-accent) 100%);
+    }
+
+    /* Firefox scrollbar */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-accent) rgba(10, 14, 39, 0.5);
+    }
+
+    /* Custom navbar for docs */
+    .navbar {
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 149, 0, 0.2);
       position: fixed;
-      top: 1rem;
-      left: 1rem;
-      background: rgba(30, 33, 57, 0.9);
-      border: 1px solid #2a2d47;
-      color: #64ffda;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: 64px;
+    }
+
+    .nav-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .nav-back {
+      color: var(--color-accent);
       text-decoration: none;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: rgba(255, 149, 0, 0.1);
+      border: 1px solid rgba(255, 149, 0, 0.2);
       transition: all 0.2s;
-      z-index: 100;
+      font-size: 0.9rem;
+      font-weight: 500;
     }
-    
-    .back-button:hover {
-      background: #1e2139;
+
+    .nav-back:hover {
+      background: rgba(255, 149, 0, 0.2);
+      border-color: var(--color-accent);
       transform: translateX(-2px);
     }
-    
+
+    .nav-title {
+      color: var(--color-text-light);
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    #frameworkSearch {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-github {
+      color: var(--color-text-light);
+      font-size: 1.3rem;
+      transition: color 0.2s;
+    }
+
+    .nav-github:hover {
+      color: var(--color-accent);
+    }
+
     .framework-header {
       background: rgba(30, 33, 57, 0.9);
-      border-bottom: 1px solid #2a2d47;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-dark);
       padding: 2rem;
       margin-bottom: 2rem;
+      margin-top: 64px;
     }
     
     .framework-title {
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #ffffff 0%, #64ffda 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--color-text-light);
     }
     
     .framework-description {
@@ -59,29 +164,34 @@
     }
     
     .content-wrapper {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 0 2rem 2rem;
       display: grid;
-      grid-template-columns: 250px 1fr;
-      gap: 2rem;
+      grid-template-columns: 280px 1fr;
+      gap: 3rem;
+      min-width: 0; /* Allow shrinking below content size */
     }
     
     .sidebar {
-      background: rgba(30, 33, 57, 0.5);
-      border: 1px solid #2a2d47;
-      border-radius: 8px;
-      padding: 1rem;
+      background: rgba(30, 33, 57, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 1.5rem;
       height: fit-content;
       position: sticky;
-      top: 5rem;
+      top: 5.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
-    
+
     .sidebar h3 {
-      color: #64ffda;
+      color: var(--color-accent);
       font-size: 0.875rem;
       text-transform: uppercase;
       margin-bottom: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
     
     .nav-section {
@@ -102,42 +212,77 @@
       color: #8892b0;
       text-decoration: none;
       display: block;
-      padding: 0.5rem;
-      border-radius: 4px;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
       transition: all 0.2s;
+      font-size: 0.9rem;
+      border-left: 2px solid transparent;
     }
-    
-    .nav-section a:hover,
+
+    .nav-section a:hover {
+      background: rgba(255, 149, 0, 0.1);
+      color: var(--color-text-light);
+      border-left-color: rgba(255, 149, 0, 0.3);
+    }
+
     .nav-section a.active {
-      background: rgba(100, 255, 218, 0.1);
-      color: #64ffda;
+      background: rgba(255, 149, 0, 0.15);
+      color: var(--color-accent);
+      border-left-color: var(--color-accent);
+      font-weight: 500;
     }
-    
+
     .doc-content {
-      background: rgba(30, 33, 57, 0.5);
-      border: 1px solid #2a2d47;
-      border-radius: 8px;
-      padding: 2rem;
+      background: rgba(30, 33, 57, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 3rem;
       min-height: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 100%;
+      min-width: 0; /* Allow shrinking */
+      overflow-wrap: break-word;
+      overflow-x: hidden; /* Hide horizontal overflow */
+    }
+
+    .doc-content > * {
+      max-width: 100%;
+      min-width: 0;
     }
     
     .doc-content h1 {
-      color: #ffffff;
-      border-bottom: 2px solid #2a2d47;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1.5rem;
+      color: var(--color-text-light);
+      border-bottom: 2px solid var(--border-dark);
+      padding-bottom: 0.75rem;
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+      font-weight: 700;
     }
-    
+
     .doc-content h2 {
-      color: #64ffda;
-      margin-top: 2rem;
+      color: var(--color-accent);
+      margin-top: 2.5rem;
       margin-bottom: 1rem;
+      font-size: 1.75rem;
+      font-weight: 600;
     }
-    
+
     .doc-content h3 {
-      color: #ffffff;
+      color: var(--color-text-light);
       margin-top: 1.5rem;
       margin-bottom: 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .doc-content h4 {
+      color: #8892b0;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
     }
     
     .doc-content p {
@@ -145,29 +290,118 @@
       line-height: 1.6;
       margin-bottom: 1rem;
     }
-    
+
     .doc-content code {
-      background: rgba(100, 255, 218, 0.1);
-      color: #64ffda;
-      padding: 0.2rem 0.4rem;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
+      background: rgba(255, 149, 0, 0.15);
+      color: var(--color-accent);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      border: 1px solid rgba(255, 149, 0, 0.2);
     }
-    
+
     .doc-content pre {
-      background: #0a0e27;
-      border: 1px solid #2a2d47;
-      border-radius: 8px;
-      padding: 1rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-dark);
+      border-radius: 10px;
+      padding: 1.5rem;
       overflow-x: auto;
-      margin: 1rem 0;
+      margin: 1.5rem 0;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
     }
-    
+
     .doc-content pre code {
       background: none;
       padding: 0;
+      border: none;
+      color: #e0e0e0;
     }
-    
+
+    .doc-content table {
+      width: 100%;
+      min-width: 500px; /* Minimum width before scrolling */
+      border-collapse: collapse;
+      margin: 0;
+      background: rgba(10, 14, 39, 0.5);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .doc-content thead {
+      background: rgba(100, 255, 218, 0.1);
+    }
+
+    .doc-content th {
+      color: #64ffda;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid #2a2d47;
+    }
+
+    .doc-content td {
+      color: #8892b0;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #1a1d37;
+      word-break: break-word;
+    }
+
+    .doc-content tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .doc-content tbody tr:hover {
+      background: rgba(100, 255, 218, 0.05);
+    }
+
+    .doc-content td code {
+      background: rgba(100, 255, 218, 0.15);
+      font-size: 0.9em;
+    }
+
+    .doc-content ul,
+    .doc-content ol {
+      color: #8892b0;
+      line-height: 1.8;
+      margin: 1rem 0;
+      padding-left: 2rem;
+    }
+
+    .doc-content li {
+      margin: 0.5rem 0;
+    }
+
+    .doc-content a {
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .doc-content a:hover {
+      border-bottom-color: var(--color-accent);
+      color: var(--color-accent-hover);
+    }
+
+    .doc-content blockquote {
+      border-left: 4px solid var(--color-accent);
+      padding-left: 1.5rem;
+      margin: 1.5rem 0;
+      color: #8892b0;
+      font-style: italic;
+      background: rgba(255, 149, 0, 0.05);
+      padding: 1rem 1rem 1rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .doc-content hr {
+      border: none;
+      border-top: 1px solid #2a2d47;
+      margin: 2rem 0;
+    }
+
     .loading {
       display: flex;
       justify-content: center;
@@ -197,22 +431,120 @@
       margin: 2rem 0;
     }
     
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .content-wrapper {
+        grid-template-columns: 240px 1fr;
+        gap: 2rem;
+        padding: 0 1.5rem 1.5rem;
+      }
+
+      .doc-content {
+        padding: 2rem;
+      }
+    }
+
+    /* Mobile */
     @media (max-width: 768px) {
       .content-wrapper {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 0 1rem 1rem;
       }
-      
+
       .sidebar {
         position: static;
+        max-width: 100%;
+      }
+
+      .doc-content {
+        padding: 1.5rem;
+      }
+
+      .doc-content h1 {
+        font-size: 2rem;
+      }
+
+      .doc-content h2 {
+        font-size: 1.5rem;
+      }
+
+      .framework-header {
+        padding: 1.5rem 0;
+      }
+
+      .framework-title {
+        font-size: 2rem;
+      }
+
+      .framework-description {
+        font-size: 1rem;
+      }
+
+      /* Make navbar items wrap better */
+      .navbar-container {
+        padding: 0.75rem 1rem;
+      }
+
+      .nav-center {
+        max-width: 100%;
+      }
+
+      #frameworkSearch {
+        max-width: 100%;
+      }
+    }
+
+    /* Very small mobile */
+    @media (max-width: 480px) {
+      .content-wrapper {
+        padding: 0 0.5rem 0.5rem;
+      }
+
+      .doc-content {
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      .doc-content pre {
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      .doc-content table {
+        font-size: 0.85rem;
+      }
+
+      .doc-content th,
+      .doc-content td {
+        padding: 0.5rem;
       }
     }
   </style>
 </head>
 <body>
-  <a href="/" class="back-button">
-    <span>←</span> Back to Marketplace
-  </a>
-  
+  <div id="page-wrapper">
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="nav-left">
+        <a href="/#browse" class="nav-back">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Browse</span>
+        </a>
+      </div>
+      <div class="nav-center">
+        <div id="frameworkSearch"></div>
+      </div>
+      <div class="nav-right">
+        <div id="frameworkMcpButton"></div>
+        <a href="https://github.com/Sidcom-AB/aloha-docs" target="_blank" class="nav-github">
+          <i class="fab fa-github"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
   <div class="framework-header">
     <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
       <h1 class="framework-title" id="frameworkTitle">Loading...</h1>
@@ -235,54 +567,77 @@
       </div>
     </main>
   </div>
-  
+  </div> <!-- Close page-wrapper -->
+
   <script type="module">
     import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-    
+
     let currentFramework = null;
     let currentDoc = null;
-    
+    let frameworkId = null;
+
     async function loadFramework() {
-      const frameworkId = window.location.pathname.substring(1);
-      
+      frameworkId = window.location.pathname.substring(1).split('/')[0];
+
       try {
         // Load framework details
         const response = await fetch(`/api/repos/${frameworkId}`);
         if (!response.ok) throw new Error('Framework not found');
-        
+
         currentFramework = await response.json();
-        
+
         // Update header
         document.getElementById('frameworkTitle').textContent = currentFramework.name;
         document.getElementById('frameworkDescription').textContent = currentFramework.description;
         document.title = `${currentFramework.name} - Documentation`;
-        
+
         // Load navigation
         if (currentFramework.structure) {
           renderNavigation(currentFramework.structure);
         } else {
-          document.getElementById('navigation').innerHTML = 
+          document.getElementById('navigation').innerHTML =
             '<p style="color: #8892b0;">No documentation available yet.</p>';
         }
-        
-        // Load first document
-        const firstDoc = getFirstDocument(currentFramework.structure);
-        if (firstDoc) {
-          if (firstDoc.type === 'component') {
-            loadSchema(firstDoc.file);
-          } else {
-            loadDocument(firstDoc.file);
-          }
+
+        // Check if there's a document path in the URL
+        const pathParts = window.location.pathname.substring(1).split('/');
+        if (pathParts.length > 1) {
+          // Remove framework ID and reconstruct document path
+          const docPath = pathParts.slice(1).join('/');
+          loadDocumentByPath(docPath);
         } else {
-          document.getElementById('docContent').innerHTML = 
-            '<h1>Welcome</h1><p>Select a document from the navigation to get started.</p>';
+          // Load first document
+          const firstDoc = getFirstDocument(currentFramework.structure);
+          if (firstDoc) {
+            loadDocument(firstDoc.file);
+          } else {
+            document.getElementById('docContent').innerHTML =
+              '<h1>Welcome</h1><p>Select a document from the navigation to get started.</p>';
+          }
         }
-        
+
       } catch (error) {
         console.error('Failed to load framework:', error);
-        document.getElementById('docContent').innerHTML = 
+        document.getElementById('docContent').innerHTML =
           `<div class="error-message">Failed to load framework: ${error.message}</div>`;
       }
+    }
+
+    function loadDocumentByPath(docPath) {
+      // If empty path, load first document
+      if (!docPath || docPath === '' || docPath === '/') {
+        const firstDoc = getFirstDocument(currentFramework.structure);
+        if (firstDoc) {
+          loadDocument(firstDoc.file);
+        }
+        return;
+      }
+
+      // Add .md extension if not present
+      if (!docPath.endsWith('.md')) {
+        docPath = docPath + '.md';
+      }
+      loadDocument(docPath);
     }
     
     function getFirstDocument(structure) {
@@ -298,183 +653,185 @@
     
     function renderNavigation(structure) {
       if (!structure || !structure.categories) {
-        document.getElementById('navigation').innerHTML = 
+        document.getElementById('navigation').innerHTML =
           '<p style="color: #8892b0;">No navigation available.</p>';
         return;
       }
-      
+
       let navHtml = '';
-      
+
       for (const category of structure.categories) {
         navHtml += `
           <div class="nav-section">
             <h3>${category.title}</h3>
             <ul>
         `;
-        
+
         for (const item of category.items) {
-          if (item.type === 'component') {
-            navHtml += `
-              <li>
-                <a href="#" onclick="loadSchema('${item.file}'); return false;" 
-                   data-file="${item.file}">
-                  ${item.title}
-                </a>
-              </li>
-            `;
-          } else {
-            navHtml += `
-              <li>
-                <a href="#" onclick="loadDocument('${item.file}'); return false;" 
-                   data-file="${item.file}">
-                  ${item.title}
-                </a>
-              </li>
-            `;
-          }
+          // Create proper URL path by removing .md extension
+          const docUrl = `/${frameworkId}/${item.file.replace('.md', '')}`;
+          navHtml += `
+            <li>
+              <a href="${docUrl}"
+                 data-file="${item.file}">
+                ${item.title}
+              </a>
+            </li>
+          `;
         }
-        
+
         navHtml += '</ul></div>';
       }
-      
+
       document.getElementById('navigation').innerHTML = navHtml;
+
+      // Add click handlers to navigation links
+      document.querySelectorAll('.nav-section a').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const file = link.dataset.file;
+          loadDocument(file);
+        });
+      });
     }
     
     window.loadDocument = async function(docPath) {
       if (currentDoc === docPath) return;
-      
-      const frameworkId = window.location.pathname.substring(1);
-      
+
+      // Update URL without reload
+      const urlPath = `/${frameworkId}/${docPath.replace('.md', '')}`;
+      window.history.pushState({ docPath }, '', urlPath);
+
       // Update active state
       document.querySelectorAll('.nav-section a').forEach(a => {
         a.classList.toggle('active', a.dataset.file === docPath);
       });
-      
+
       // Show loading
-      document.getElementById('docContent').innerHTML = 
+      document.getElementById('docContent').innerHTML =
         '<div class="loading"><div class="loading-spinner"></div></div>';
-      
+
       try {
         const response = await fetch(`/api/repos/${frameworkId}/docs/${docPath}`);
-        if (!response.ok) throw new Error('Document not found');
-        
+        if (!response.ok) {
+          // Document not found, redirect to first document
+          console.warn(`Document not found: ${docPath}, loading first document`);
+          const firstDoc = getFirstDocument(currentFramework.structure);
+          if (firstDoc && firstDoc.file !== docPath) {
+            currentDoc = null; // Reset to allow loading
+            loadDocument(firstDoc.file);
+            return;
+          }
+          throw new Error('Document not found');
+        }
+
         const data = await response.json();
-        
-        // Render markdown
+
+        // Render markdown with relative link handling
         const html = marked(data.content);
         document.getElementById('docContent').innerHTML = html;
-        
+
+        // Wrap tables in scrollable container for mobile
+        document.querySelectorAll('.doc-content table').forEach(table => {
+          if (!table.parentElement.classList.contains('table-wrapper')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-wrapper';
+            wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.5rem 0;';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+          }
+        });
+
+        // Fix relative markdown links to work with our routing
+        document.querySelectorAll('.doc-content a').forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && !href.startsWith('http') && !href.startsWith('#') && href.endsWith('.md')) {
+            // Convert relative .md link to our route format
+            const currentDir = docPath.substring(0, docPath.lastIndexOf('/'));
+            let targetPath = href;
+
+            // Handle ../
+            if (href.startsWith('../')) {
+              const upLevels = (href.match(/\.\.\//g) || []).length;
+              let dirParts = currentDir.split('/');
+              dirParts = dirParts.slice(0, -upLevels);
+              targetPath = dirParts.join('/') + '/' + href.replace(/\.\.\//g, '');
+            } else if (href.startsWith('./')) {
+              targetPath = currentDir + '/' + href.substring(2);
+            } else {
+              targetPath = currentDir + '/' + href;
+            }
+
+            // Clean up path and convert to route
+            targetPath = targetPath.replace(/\/+/g, '/').replace(/^\//, '');
+            const routePath = `/${frameworkId}/${targetPath.replace('.md', '')}`;
+            link.setAttribute('href', routePath);
+
+            // Add click handler
+            link.addEventListener('click', (e) => {
+              e.preventDefault();
+              loadDocument(targetPath);
+            });
+          }
+        });
+
         // Highlight code blocks
         if (window.Prism) {
           Prism.highlightAll();
         }
-        
+
+        // Update page title
+        const firstHeading = document.querySelector('.doc-content h1');
+        if (firstHeading) {
+          document.title = `${firstHeading.textContent} - ${currentFramework.name}`;
+        }
+
+        // Scroll to top
+        window.scrollTo(0, 0);
+
         currentDoc = docPath;
-        
+
       } catch (error) {
         console.error('Failed to load document:', error);
-        document.getElementById('docContent').innerHTML = 
+        document.getElementById('docContent').innerHTML =
           `<div class="error-message">Failed to load document: ${error.message}</div>`;
       }
     }
-    
-    window.loadSchema = async function(schemaPath) {
-      if (currentDoc === schemaPath) return;
-      
-      const frameworkId = window.location.pathname.substring(1);
-      
-      // Update active state
-      document.querySelectorAll('.nav-section a').forEach(a => {
-        a.classList.toggle('active', a.dataset.file === schemaPath);
-      });
-      
-      // Show loading
-      document.getElementById('docContent').innerHTML = 
-        '<div class="loading"><div class="loading-spinner"></div></div>';
-      
-      try {
-        const response = await fetch(`/api/repos/${frameworkId}/docs/${schemaPath}`);
-        if (!response.ok) throw new Error('Schema not found');
-        
-        const data = await response.json();
-        const schema = JSON.parse(data.content);
-        
-        // Render schema as documentation
-        let html = `<h1>${schema.title || schema.tagName}</h1>`;
-        
-        if (schema.description) {
-          html += `<p>${schema.description}</p>`;
-        }
-        
-        if (schema.tagName) {
-          html += `<h2>Usage</h2>`;
-          html += `<pre><code>&lt;${schema.tagName}&gt;&lt;/${schema.tagName}&gt;</code></pre>`;
-        }
-        
-        if (schema.properties) {
-          html += `<h2>Properties</h2>`;
-          html += `<table style="width: 100%; border-collapse: collapse;">`;
-          html += `<thead><tr>
-            <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #2a2d47;">Property</th>
-            <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #2a2d47;">Type</th>
-            <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #2a2d47;">Description</th>
-          </tr></thead><tbody>`;
-          
-          for (const [propName, propDef] of Object.entries(schema.properties)) {
-            html += `<tr>`;
-            html += `<td style="padding: 0.5rem; border-bottom: 1px solid #1a1d37;"><code>${propName}</code></td>`;
-            html += `<td style="padding: 0.5rem; border-bottom: 1px solid #1a1d37;">${propDef.type || 'any'}</td>`;
-            html += `<td style="padding: 0.5rem; border-bottom: 1px solid #1a1d37;">${propDef.description || ''}</td>`;
-            html += `</tr>`;
-          }
-          
-          html += `</tbody></table>`;
-        }
-        
-        if (schema.events) {
-          html += `<h2>Events</h2>`;
-          html += `<ul>`;
-          for (const event of schema.events) {
-            html += `<li><code>${event.name}</code>: ${event.description || ''}</li>`;
-          }
-          html += `</ul>`;
-        }
-        
-        if (schema.slots) {
-          html += `<h2>Slots</h2>`;
-          html += `<ul>`;
-          for (const slot of schema.slots) {
-            html += `<li><code>${slot.name || 'default'}</code>: ${slot.description || ''}</li>`;
-          }
-          html += `</ul>`;
-        }
-        
-        if (schema.examples && schema.examples.length > 0) {
-          html += `<h2>Examples</h2>`;
-          for (const example of schema.examples) {
-            if (example.title) {
-              html += `<h3>${example.title}</h3>`;
-            }
-            html += `<pre><code>${example.code}</code></pre>`;
-          }
-        }
-        
-        document.getElementById('docContent').innerHTML = html;
-        
-        // Highlight code blocks
-        if (window.Prism) {
-          Prism.highlightAll();
-        }
-        
-        currentDoc = schemaPath;
-        
-      } catch (error) {
-        console.error('Failed to load schema:', error);
-        document.getElementById('docContent').innerHTML = 
-          `<div class="error-message">Failed to load schema: ${error.message}</div>`;
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', (event) => {
+      if (event.state && event.state.docPath) {
+        currentDoc = null; // Reset to allow reload
+        loadDocument(event.state.docPath);
+      } else {
+        // Back to framework root, load first doc
+        location.reload();
       }
-    }
-    
+    });
+
+    // Initialize search component
+    import('/js/components/doc-search.js').then(module => {
+      const { DocSearch } = module;
+      const docSearch = new DocSearch('frameworkSearch', {
+        repositoryId: frameworkId,
+        placeholder: 'Search in documentation...',
+        limit: 10,
+        onResultClick: (result) => {
+          loadDocument(result.file);
+        }
+      });
+    });
+
+    // Initialize MCP widget button
+    import('/js/components/mcp-widget.js').then(module => {
+      const { MCPWidget } = module;
+      const mcpWidget = new MCPWidget('frameworkMcpButton', {
+        repositoryId: frameworkId,
+        repositoryName: currentFramework?.name || 'Documentation',
+        compact: true
+      });
+    });
+
     // Load framework on page load
     loadFramework();
   </script>

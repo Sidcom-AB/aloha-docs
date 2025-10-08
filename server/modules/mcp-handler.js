@@ -12,17 +12,20 @@ export class MCPHandler {
     };
   }
   
-  async handle(request) {
+  async handle(request, repositoryId = null) {
     const { method, params, id } = request;
-    
+
+    // Store scope for use in tool calls
+    this.currentScope = repositoryId;
+
     if (method === 'tools/list') {
       return this.listTools(id);
     }
-    
+
     if (method === 'tools/call') {
       return this.callTool(params, id);
     }
-    
+
     return {
       jsonrpc: '2.0',
       id,
@@ -41,12 +44,12 @@ export class MCPHandler {
         tools: [
           {
             name: 'search_docs',
-            description: 'Search documentation with semantic search',
+            description: 'Search across all documentation libraries with full-text search. Searches titles, descriptions, and content of all markdown files.',
             inputSchema: {
               type: 'object',
               properties: {
-                query: { type: 'string', description: 'Search query' },
-                limit: { type: 'number', default: 5 }
+                query: { type: 'string', description: 'Search query to find in documentation' },
+                limit: { type: 'number', default: 5, description: 'Maximum number of results to return' }
               },
               required: ['query']
             }
@@ -141,14 +144,20 @@ export class MCPHandler {
   }
   
   async searchDocs({ query, limit = 5 }) {
-    const results = await this.searchEngine.search(query, limit);
+    // Use current scope if set, otherwise search all repos
+    const repositoryId = this.currentScope || null;
+    const results = await this.docsLoader.searchDocuments(query, repositoryId);
     return {
       query,
-      results: results.map(r => ({
-        snippet: r.snippet,
-        source: r.source,
-        score: r.score,
-        title: r.title
+      scope: repositoryId ? `repository: ${repositoryId}` : 'all repositories',
+      totalResults: results.length,
+      results: results.slice(0, limit).map(r => ({
+        title: r.title,
+        repository: r.repositoryName,
+        section: r.section,
+        description: r.description,
+        file: r.file,
+        score: r.score
       }))
     };
   }

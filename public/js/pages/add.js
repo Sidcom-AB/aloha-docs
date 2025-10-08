@@ -57,6 +57,18 @@ export default {
   setupEventListeners() {
     document.getElementById('nextBtn')?.addEventListener('click', () => this.nextStep());
     document.getElementById('prevBtn')?.addEventListener('click', () => this.prevStep());
+
+    // Setup URL field listener for Step 1
+    const urlField = document.getElementById('githubUrl');
+    if (urlField) {
+      urlField.addEventListener('blur', () => this.checkRepositoryAccess());
+      urlField.addEventListener('change', () => {
+        // Reset token requirement when URL changes
+        this.formData.needsToken = false;
+        const tokenField = document.getElementById('tokenField');
+        if (tokenField) tokenField.style.display = 'none';
+      });
+    }
   },
 
   renderStep() {
@@ -91,12 +103,14 @@ export default {
           <small>We'll automatically discover your documentation</small>
         </div>
 
-        <div class="form-group">
-          <label for="githubToken">GitHub Token (Optional)</label>
+        <div id="discoveryStatus" style="margin-top: 1rem;"></div>
+
+        <div class="form-group" id="tokenField" style="display: ${this.formData.needsToken ? 'block' : 'none'};">
+          <label for="githubToken">GitHub Token *</label>
           <input type="password" id="githubToken"
                  placeholder="ghp_xxxxxxxxxxxx"
                  value="${this.formData.githubToken || ''}">
-          <small>Only needed for private repositories. <a href="https://github.com/settings/tokens" target="_blank">Get a token</a></small>
+          <small>This repository requires authentication. <a href="https://github.com/settings/tokens" target="_blank">Create a token</a> with 'repo' access.</small>
         </div>
       </div>
     `;
@@ -273,6 +287,58 @@ export default {
 
     // Render new step
     this.renderStep();
+  },
+
+  async checkRepositoryAccess() {
+    const url = document.getElementById('githubUrl')?.value;
+    if (!url || !url.includes('github.com')) return;
+
+    const statusDiv = document.getElementById('discoveryStatus');
+    if (!statusDiv) return;
+
+    statusDiv.innerHTML = '<div class="loading"></div> Checking repository access...';
+    statusDiv.className = 'discover-status';
+
+    try {
+      const response = await fetch('/api/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      const result = await response.json();
+
+      if (response.status === 403 || (result.error && result.error.includes('403'))) {
+        // Repository requires authentication
+        this.formData.needsToken = true;
+        const tokenField = document.getElementById('tokenField');
+        if (tokenField) tokenField.style.display = 'block';
+
+        statusDiv.className = 'discover-status error';
+        statusDiv.innerHTML = `
+          <strong>🔒 Private Repository</strong>
+          <p>This repository requires authentication. Please provide a GitHub token below.</p>
+        `;
+      } else if (response.ok && result.found) {
+        // Repository is accessible and docs found
+        this.formData.needsToken = false;
+        statusDiv.className = 'discover-status success';
+        statusDiv.innerHTML = `
+          <strong>✅ Repository accessible!</strong>
+          <p>Documentation found at: ${result.path}</p>
+        `;
+      } else {
+        // Repository accessible but no docs found
+        statusDiv.className = 'discover-status';
+        statusDiv.innerHTML = `
+          <strong>ℹ️ Repository accessible</strong>
+          <p>No documentation auto-detected. You can specify the path in the next step.</p>
+        `;
+      }
+    } catch (error) {
+      statusDiv.className = 'discover-status error';
+      statusDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+    }
   },
 
   async submitForm() {

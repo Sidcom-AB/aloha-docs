@@ -1,4 +1,5 @@
 import { GitHubLoader } from './github-loader.js';
+import { LocalLoader } from './local-loader.js';
 import { AutoDiscovery } from './auto-discovery.js';
 import { TokenManager } from './token-manager.js';
 import { promises as fs } from 'fs';
@@ -9,6 +10,7 @@ export class RepositoryManager {
     this.configPath = configPath;
     this.repositories = new Map();
     this.githubLoader = new GitHubLoader(process.env.GITHUB_TOKEN);
+    this.localLoader = new LocalLoader();
     this.tokenManager = new TokenManager();
     this.initialized = false;
   }
@@ -69,14 +71,24 @@ export class RepositoryManager {
       throw new Error('Repository config must have id and url');
     }
 
-    const parsed = this.githubLoader.parseGitHubUrl(config.url);
-    
+    // Check if it's a local repository
+    const isLocal = config.url.startsWith('local://');
+    let parsed;
+
+    if (isLocal) {
+      parsed = this.localLoader.parseLocalUrl(config.url);
+    } else {
+      parsed = this.githubLoader.parseGitHubUrl(config.url);
+    }
+
     const repository = {
       id: config.id,
       name: config.name || config.id,
       description: config.description || '',
       url: config.url,
-      github: parsed,
+      isLocal: isLocal,
+      github: isLocal ? null : parsed,
+      localPath: isLocal ? parsed.path : null,
       token: config.token || null,
       enabled: config.enabled !== false,
       children: new Map()
@@ -117,15 +129,30 @@ export class RepositoryManager {
   }
 
   async validateRepository(repo) {
+    // Handle local repositories
+    if (repo.isLocal) {
+      const validation = await this.localLoader.validateRepository(repo.localPath);
+
+      if (validation.valid) {
+        repo.structure = validation.structure;
+        repo.validated = true;
+      } else {
+        repo.validated = false;
+      }
+
+      return validation;
+    }
+
+    // Handle GitHub repositories
     const { owner, repo: repoName, branch, path: basePath } = repo.github;
-    
+
     // Use auto-discovery instead of looking for table_of_contents
-    const discovery = new AutoDiscovery(repo.token);
-    
+    const discovery = new AutoDiscovery(repo.token || process.env.GITHUB_TOKEN);
+
     const validation = await discovery.validateRepository(
-      owner, 
-      repoName, 
-      branch, 
+      owner,
+      repoName,
+      branch,
       basePath
     );
 
@@ -213,9 +240,17 @@ export class RepositoryManager {
       throw new Error(`Repository ${repositoryId} is not validated`);
     }
 
+    // Handle local repositories
+    if (repo.isLocal) {
+      const fullPath = `${repo.localPath}/${documentPath}`;
+      const content = await this.localLoader.loadFile(fullPath);
+      return content;
+    }
+
+    // Handle GitHub repositories
     const { owner, repo: repoName, branch, path: basePath } = repo.github;
     const fullPath = basePath ? `${basePath}/${documentPath}` : documentPath;
-    
+
     // Use repo-specific token if available
     const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
     return await loader.loadFile(owner, repoName, branch, fullPath);
@@ -264,22 +299,60 @@ export class RepositoryManager {
   async searchInRepository(repo, query) {
     const results = [];
     const queryLower = query.toLowerCase();
-    
-    if (!repo.tableOfContents) return results;
 
-    for (const section of repo.tableOfContents.sections) {
-      if (section.items) {
-        for (const item of section.items) {
-          if (item.title.toLowerCase().includes(queryLower) ||
-              (item.description && item.description.toLowerCase().includes(queryLower))) {
+    if (!repo.structure || !repo.structure.categories) return results;
+
+    for (const category of repo.structure.categories) {
+      if (category.items) {
+        for (const item of category.items) {
+          let matchFound = false;
+          let excerpt = item.description || '';
+          let score = 0;
+
+          // Search in title and description
+          if (item.title.toLowerCase().includes(queryLower)) {
+            matchFound = true;
+            score = this.calculateSearchScore(item, queryLower);
+          }
+
+          if (item.description && item.description.toLowerCase().includes(queryLower)) {
+            matchFound = true;
+            score = Math.max(score, this.calculateSearchScore(item, queryLower) * 0.8);
+          }
+
+          // Search in actual file content
+          try {
+            const content = await this.loadDocument(repo.id, item.file);
+            const contentLower = content.toLowerCase();
+
+            if (contentLower.includes(queryLower)) {
+              matchFound = true;
+
+              // Extract excerpt around the match
+              const index = contentLower.indexOf(queryLower);
+              const start = Math.max(0, index - 60);
+              const end = Math.min(content.length, index + query.length + 60);
+              excerpt = '...' + content.substring(start, end).replace(/\n/g, ' ') + '...';
+
+              // Content match has lower score than title match
+              if (score === 0) {
+                score = 3;
+              }
+            }
+          } catch (error) {
+            // If we can't load the document, just skip content search
+            console.error(`Failed to load document ${item.file} for search:`, error.message);
+          }
+
+          if (matchFound) {
             results.push({
               repositoryId: repo.id,
               repositoryName: repo.name,
-              section: section.title,
+              section: category.title,
               title: item.title,
-              description: item.description,
+              description: excerpt,
               file: item.file,
-              score: this.calculateSearchScore(item, queryLower)
+              score: score
             });
           }
         }

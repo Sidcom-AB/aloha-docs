@@ -3,7 +3,7 @@ import { GitHubLoader } from './github-loader.js';
 export class AutoDiscovery {
   constructor(githubToken = null) {
     this.loader = new GitHubLoader(githubToken);
-    this.supportedExtensions = ['.md', '.schema.json'];
+    this.supportedExtensions = ['.md'];
     this.ignoreFolders = ['node_modules', '.git', '.github', 'dist', 'build'];
   }
 
@@ -97,7 +97,6 @@ export class AutoDiscovery {
   }
 
   getFileType(filename) {
-    if (filename.endsWith('.schema.json')) return 'component';
     if (filename.endsWith('.md')) return 'document';
     return 'unknown';
   }

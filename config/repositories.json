@@ -2,10 +2,17 @@
   "version": "1.0.0",
   "repositories": [
     {
-      "id": "aloha-sample",
-      "name": "Aloha Sample",
-      "description": "Sample documentation for Aloha Framework",
-      "url": "https://github.com/Sidcom-AB/aloha-docs/tree/master/docs",
+      "id": "aloha-docs",
+      "name": "🍍 Aloha Docs",
+      "description": "Official Aloha Docs documentation - Learn how to structure docs for auto-discovery and MCP integration",
+      "url": "local://docs",
+      "enabled": true
+    },
+    {
+      "id": "sample-framework",
+      "name": "Sample Framework",
+      "description": "Example component library showing Aloha documentation best practices with dummy components",
+      "url": "local://sample_docs",
       "enabled": true
     }
   ]

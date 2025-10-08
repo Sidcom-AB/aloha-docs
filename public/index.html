@@ -136,49 +136,8 @@
       padding: 0 2rem;
     }
 
-    .search-box {
-      position: relative;
-      background: var(--bg-card);
-      border-radius: 12px;
-      border: 1px solid var(--border-dark);
-      transition: border-color 0.2s;
-    }
-
-    .search-box:focus-within {
-      border-color: var(--color-accent);
-    }
-
-    .search-box input {
+    #homeSearch {
       width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--color-text-light);
-      font-size: 1rem;
-      padding: 0.75rem 3rem 0.75rem 1rem;
-      outline: none;
-    }
-
-    .search-box input::placeholder {
-      color: var(--color-text-muted);
-    }
-
-    .search-icon {
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--color-text-muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .search-icon:hover {
-      color: var(--color-accent);
-    }
-
-    .search-icon:active {
-      transform: translateY(-50%) scale(0.9);
     }
 
     .container {
@@ -504,6 +463,51 @@
     .browse-search {
       max-width: 600px;
       margin: 0 auto 3rem;
+    }
+
+    .browse-search .search-box {
+      position: relative;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-dark);
+      transition: border-color 0.2s;
+    }
+
+    .browse-search .search-box:focus-within {
+      border-color: var(--color-accent);
+    }
+
+    .browse-search .search-box input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--color-text-light);
+      font-size: 1rem;
+      padding: 0.75rem 3rem 0.75rem 1rem;
+      outline: none;
+    }
+
+    .browse-search .search-box input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .browse-search .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .browse-search .search-icon:hover {
+      color: var(--color-accent);
+    }
+
+    .browse-search .search-icon:active {
+      transform: translateY(-50%) scale(0.9);
     }
 
     /* Custom Table Styles */

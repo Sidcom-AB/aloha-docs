@@ -7,14 +7,15 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
   
   router.post('/search', async (req, res) => {
     try {
-      const { query, limit = 5 } = req.body;
+      const { query, limit = 5, repositoryId = null } = req.body;
 
       if (!query) {
         return res.status(400).json({ error: 'Query is required' });
       }
 
-      const results = await searchEngine.search(query, limit);
-      res.json({ results });
+      // Use repository manager for both single-repo and cross-repo search
+      const results = await repositoryManager.searchDocuments(query, repositoryId);
+      res.json({ results: results.slice(0, limit) });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -194,16 +195,36 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
   router.post('/discover', async (req, res) => {
     try {
       const { url, customPath, token } = req.body;
-      
+
       if (!url) {
         return res.status(400).json({ error: 'URL is required' });
       }
-      
+
       // Create discovery instance with token if provided
       const discoveryInstance = new GitHubDiscovery(token || null);
       const result = await discoveryInstance.discoverRepository(url, customPath);
+
+      // Check if the error indicates authentication is required
+      if (!result.found && result.error) {
+        if (result.error.includes('404') && result.error.includes('Not Found') && !token) {
+          // 404 on a repo without token likely means it's private
+          return res.status(403).json({
+            found: false,
+            error: 'Repository is private or does not exist. Authentication required.',
+            needsAuth: true
+          });
+        }
+      }
+
       res.json(result);
     } catch (error) {
+      // Check if error is a 403 or 404 authentication error
+      if (error.message.includes('403') || error.message.includes('404')) {
+        return res.status(403).json({
+          error: error.message,
+          needsAuth: true
+        });
+      }
       res.status(400).json({ error: error.message });
     }
   });

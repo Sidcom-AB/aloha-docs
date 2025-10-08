@@ -19,7 +19,12 @@ export class GitHubDiscovery {
   async discoverRepository(repoUrl, customPath = null) {
     try {
       const parsed = this.parseRepoUrl(repoUrl);
-      
+
+      // Get actual default branch from GitHub if not explicitly specified
+      if (!parsed.branchExplicit) {
+        parsed.branch = await this.loader.getDefaultBranch(parsed.owner, parsed.repo);
+      }
+
       // If custom path provided, validate it directly
       if (customPath) {
         const result = await this.validatePath(parsed, customPath);
@@ -27,7 +32,7 @@ export class GitHubDiscovery {
           return {
             found: true,
             path: customPath,
-            url: `${repoUrl}/tree/${parsed.branch || 'main'}/${customPath}`,
+            url: `${repoUrl}/tree/${parsed.branch}/${customPath}`,
             metadata: result.metadata,
             tableOfContents: result.tableOfContents
           };
@@ -40,7 +45,7 @@ export class GitHubDiscovery {
         return {
           found: true,
           path: discovered.path,
-          url: `${repoUrl}/tree/${parsed.branch || 'main'}/${discovered.path}`,
+          url: `${repoUrl}/tree/${parsed.branch}/${discovered.path}`,
           metadata: discovered.metadata,
           tableOfContents: discovered.tableOfContents
         };
@@ -72,6 +77,7 @@ export class GitHubDiscovery {
           owner: match[1],
           repo: match[2].replace('.git', ''),
           branch: match[3] || 'main',
+          branchExplicit: !!match[3], // Track if branch was explicitly specified
           path: match[4] || ''
         };
       }
