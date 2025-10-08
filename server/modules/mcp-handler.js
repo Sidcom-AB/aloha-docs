@@ -37,7 +37,8 @@ export class MCPHandler {
           },
           serverInfo: {
             name: 'aloha-docs',
-            version: '1.0.0'
+            version: '1.0.0',
+            description: 'Aloha Docs - AI-first documentation marketplace. Search and access technical documentation from multiple frameworks and libraries. Use this MCP server when users ask about documentation for any framework, library, or technical topic that might be available in the connected documentation repositories.'
           }
         }
       };
@@ -55,6 +56,14 @@ export class MCPHandler {
 
     if (method === 'tools/call') {
       return this.callTool(params, id);
+    }
+
+    if (method === 'resources/list') {
+      return this.listResources(id);
+    }
+
+    if (method === 'resources/read') {
+      return this.readResource(params, id);
     }
 
     return {
@@ -75,7 +84,7 @@ export class MCPHandler {
         tools: [
           {
             name: 'ping',
-            description: 'Simple test tool that returns server version and status. Use this to verify MCP connection is working.',
+            description: 'Test MCP connection and see available frameworks. Returns server status, version, and list of all connected documentation frameworks.',
             inputSchema: {
               type: 'object',
               properties: {},
@@ -84,7 +93,7 @@ export class MCPHandler {
           },
           {
             name: 'list_frameworks',
-            description: 'List all available documentation frameworks/repositories. Returns name, description, document count, and repository info.',
+            description: 'List ALL available documentation frameworks/repositories with details. Use this to discover what documentation is available in this MCP server. Returns framework ID, name, description, document count, and repository info for each framework.',
             inputSchema: {
               type: 'object',
               properties: {},
@@ -93,12 +102,12 @@ export class MCPHandler {
           },
           {
             name: 'search_docs',
-            description: 'Search documentation within a specific framework. Use this when you know which framework to search in (get frameworkId from search_frameworks tool first). Returns relevant documentation pages with titles, descriptions, and URLs.',
+            description: 'Search documentation within ONE specific framework. Use when user asks about a specific framework (e.g., "react hooks", "webawesome buttons"). First get frameworkId from list_frameworks or search_frameworks. Returns relevant doc pages with docUri for retrieval.',
             inputSchema: {
               type: 'object',
               properties: {
                 frameworkId: { type: 'string', description: 'Framework ID to search in (get this from search_frameworks or list_frameworks)' },
-                query: { type: 'string', description: 'Search query to find in documentation' },
+                query: { type: 'string', description: 'What to search for in the documentation (e.g., "authentication", "API reference")' },
                 limit: { type: 'number', default: 10, description: 'Maximum number of results to return' }
               },
               required: ['frameworkId', 'query']
@@ -106,37 +115,36 @@ export class MCPHandler {
           },
           {
             name: 'search_frameworks',
-            description: 'Search for frameworks by name or description. Use this to find available frameworks when user searches for "react", "sample", etc.',
+            description: 'Find which frameworks are available by searching their names/descriptions. Use when user mentions a framework name you need to find (e.g., "find react framework", "search for webawesome"). Returns matching frameworks with their IDs for use in search_docs.',
             inputSchema: {
               type: 'object',
               properties: {
-                query: { type: 'string', description: 'Search term to match against framework names and descriptions' }
+                query: { type: 'string', description: 'Framework name or keyword to search for (e.g., "react", "webawesome", "vue")' }
               },
               required: ['query']
             }
           },
           {
             name: 'search_all',
-            description: 'Search across ALL documentation frameworks at once. Use this when you don\'t know which framework contains the answer, or when searching for general topics across all available documentation. For targeted searches, use search_docs with a specific frameworkId instead.',
+            description: 'Search across ALL frameworks simultaneously for documentation. Use when: (1) user asks broad questions without specifying a framework (e.g., "how to authenticate"), (2) you don\'t know which framework has the answer, or (3) comparing solutions across frameworks. Returns top results from all available documentation.',
             inputSchema: {
               type: 'object',
               properties: {
-                query: { type: 'string', description: 'Search query to find across all documentation' },
-                limit: { type: 'number', default: 10, description: 'Maximum number of results to return' }
+                query: { type: 'string', description: 'What to search for across all documentation (e.g., "authentication guide", "API endpoints")' },
+                limit: { type: 'number', default: 10, description: 'Maximum number of results to return across all frameworks' }
               },
               required: ['query']
             }
           },
           {
             name: 'get_doc',
-            description: 'Get full content of a specific documentation page. Use the file path from search results to retrieve the complete markdown content.',
+            description: 'Retrieve the FULL markdown content of a specific documentation page. Always use this after searching to get complete details. Takes the docUri from search results (format: doc://frameworkId/path/to/file.md). Returns complete markdown content ready to answer user questions.',
             inputSchema: {
               type: 'object',
               properties: {
-                frameworkId: { type: 'string', description: 'Framework ID (get from search results)' },
-                path: { type: 'string', description: 'Document path (e.g., getting-started.md) - get this from search results' }
+                docUri: { type: 'string', description: 'Document URI from search results (e.g., "doc://aloha-docs/getting-started.md")' }
               },
-              required: ['frameworkId', 'path']
+              required: ['docUri']
             }
           },
         ]
@@ -221,12 +229,11 @@ export class MCPHandler {
       totalResults: results.length,
       results: results.map(r => ({
         title: r.title,
+        docUri: `doc://${r.repositoryId}/${r.file}`,
         frameworkId: r.repositoryId,
         frameworkName: r.repositoryName,
         section: r.section,
         description: r.description,
-        file: r.file,
-        url: `/${r.repositoryId}/${r.file.replace('.md', '')}`,
         relevanceScore: r.score
       }))
     };
@@ -242,12 +249,11 @@ export class MCPHandler {
       totalResults: results.length,
       results: results.map(r => ({
         title: r.title,
+        docUri: `doc://${r.repositoryId}/${r.file}`,
         frameworkId: r.repositoryId,
         frameworkName: r.repositoryName,
         section: r.section,
         description: r.description,
-        file: r.file,
-        url: `/${r.repositoryId}/${r.file.replace('.md', '')}`,
         relevanceScore: r.score
       }))
     };
@@ -279,17 +285,114 @@ export class MCPHandler {
     };
   }
 
-  async getDoc({ frameworkId, path }) {
+  async getDoc({ docUri }) {
+    // Parse docUri: doc://frameworkId/path/to/file.md
+    if (!docUri || !docUri.startsWith('doc://')) {
+      throw new Error('Invalid docUri format. Expected: doc://frameworkId/path/to/file.md');
+    }
+
+    const uriPath = docUri.replace('doc://', '');
+    const firstSlash = uriPath.indexOf('/');
+
+    if (firstSlash === -1) {
+      throw new Error('Invalid docUri format. Expected: doc://frameworkId/path/to/file.md');
+    }
+
+    const frameworkId = uriPath.substring(0, firstSlash);
+    const path = uriPath.substring(firstSlash + 1);
+
     const content = await this.docsLoader.loadDocument(frameworkId, path);
     if (!content) {
-      throw new Error(`Document ${path} not found in framework ${frameworkId}`);
+      throw new Error(`Document not found: ${docUri}`);
     }
 
     return {
-      frameworkId,
-      path,
+      docUri,
       content,
       url: `/${frameworkId}/${path.replace('.md', '')}`
     };
+  }
+
+  async listResources(id) {
+    const resources = [];
+
+    // Get all documents from searchEngine (which has them indexed)
+    // Search with empty query to get all documents
+    const allDocs = await this.docsLoader.searchDocuments('', null, 10000); // Get up to 10000 docs
+
+    // Convert each document to a resource
+    for (const doc of allDocs) {
+      resources.push({
+        uri: `doc://${doc.repositoryId}/${doc.file}`,
+        name: `${doc.repositoryName}: ${doc.title}`,
+        description: doc.description || `${doc.title} documentation`,
+        mimeType: 'text/markdown'
+      });
+    }
+
+    return {
+      jsonrpc: '2.0',
+      id,
+      result: {
+        resources
+      }
+    };
+  }
+
+  async readResource(params, id) {
+    const { uri } = params;
+
+    if (!uri || !uri.startsWith('doc://')) {
+      return {
+        jsonrpc: '2.0',
+        id,
+        error: {
+          code: -32602,
+          message: 'Invalid resource URI. Expected format: doc://frameworkId/path/to/file.md'
+        }
+      };
+    }
+
+    try {
+      // Parse URI: doc://frameworkId/path/to/file.md
+      const uriPath = uri.replace('doc://', '');
+      const firstSlash = uriPath.indexOf('/');
+
+      if (firstSlash === -1) {
+        throw new Error('Invalid URI format');
+      }
+
+      const frameworkId = uriPath.substring(0, firstSlash);
+      const path = uriPath.substring(firstSlash + 1);
+
+      const content = await this.docsLoader.loadDocument(frameworkId, path);
+
+      if (!content) {
+        throw new Error(`Document not found: ${uri}`);
+      }
+
+      return {
+        jsonrpc: '2.0',
+        id,
+        result: {
+          contents: [
+            {
+              uri,
+              mimeType: 'text/markdown',
+              text: content
+            }
+          ]
+        }
+      };
+    } catch (error) {
+      return {
+        jsonrpc: '2.0',
+        id,
+        error: {
+          code: -32603,
+          message: error.message
+        }
+      };
+    }
   }
 }

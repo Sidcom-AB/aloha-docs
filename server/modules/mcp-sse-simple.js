@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { z } from 'zod';
+import { MCPContext } from './mcp-context.js';
 
 /**
  * MCP SSE Server using official SDK SSEServerTransport
@@ -70,8 +71,9 @@ export class MCPSSESimple {
 
   /**
    * Create new MCP Server instance with tools from mcpHandler
+   * @param {string} context - 'root' for all frameworks, or frameworkId for specific framework
    */
-  createServer() {
+  async createServer(context = 'root') {
     const server = new McpServer(
       {
         name: 'aloha-docs',
@@ -121,6 +123,55 @@ export class MCPSSESimple {
       );
     }
 
+    // Register all resources using SDK's resource() method
+    const resourcesResponse = await this.mcpHandler.listResources(null); // id not needed for getting list
+    const resources = resourcesResponse.result.resources;
+
+    console.log(`[MCP SSE SDK] Registering ${resources.length} resources...`);
+
+    for (const resource of resources) {
+      server.resource(
+        resource.name,
+        resource.uri,
+        {
+          description: resource.description,
+          mimeType: resource.mimeType
+        },
+        async (uriObj) => {
+          // SDK passes URI as an object with 'uri' property
+          const uri = typeof uriObj === 'string' ? uriObj : (uriObj?.uri || resource.uri);
+
+          console.log('[Resource callback] uriObj:', JSON.stringify(uriObj), 'uri:', uri);
+
+          if (!uri) {
+            throw new Error('URI is required but was undefined');
+          }
+
+          // Parse URI: doc://frameworkId/path/to/file.md
+          const uriPath = uri.replace('doc://', '');
+          const firstSlash = uriPath.indexOf('/');
+          const frameworkId = uriPath.substring(0, firstSlash);
+          const path = uriPath.substring(firstSlash + 1);
+
+          const content = await this.mcpHandler.docsLoader.loadDocument(frameworkId, path);
+          if (!content) {
+            throw new Error(`Document not found: ${uri}`);
+          }
+
+          // SDK expects { contents: [{ uri, text }] }
+          return {
+            contents: [{
+              uri,
+              text: content
+            }]
+          };
+        }
+      );
+    }
+
+    console.log(`[MCP SSE SDK] Successfully registered ${resources.length} resources`);
+
+
     return server;
   }
 
@@ -145,7 +196,7 @@ export class MCPSSESimple {
       };
 
       // Create new server instance and connect transport
-      const server = this.createServer();
+      const server = await this.createServer();
       await server.connect(transport);
 
       console.log(`[MCP SSE SDK] Session ${sessionId} connected successfully!`);
