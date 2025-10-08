@@ -4,13 +4,12 @@ export class MCPHandler {
     this.docsLoader = docsLoader;
 
     this.tools = {
-      search_docs: this.searchDocs.bind(this),
+      ping: this.ping.bind(this),
+      list_frameworks: this.listFrameworks.bind(this),
       search_frameworks: this.searchFrameworks.bind(this),
-      search_detailed: this.searchDetailed.bind(this),
-      get_doc: this.getDoc.bind(this),
-      get_component: this.getComponent.bind(this),
-      get_schema: this.getSchema.bind(this),
-      get_token: this.getToken.bind(this)
+      search_docs: this.searchDocs.bind(this),
+      search_all: this.searchAll.bind(this),
+      get_doc: this.getDoc.bind(this)
     };
   }
   
@@ -19,6 +18,36 @@ export class MCPHandler {
 
     // Store scope for use in tool calls
     this.currentScope = repositoryId;
+
+    // Handle initialize request (required by MCP protocol)
+    if (method === 'initialize') {
+      // Accept client's protocol version if provided, otherwise use our default
+      const protocolVersion = params?.protocolVersion || '2024-11-05';
+
+      return {
+        jsonrpc: '2.0',
+        id,
+        result: {
+          protocolVersion: protocolVersion,
+          capabilities: {
+            tools: {},
+            resources: {},
+            prompts: {},
+            logging: {}
+          },
+          serverInfo: {
+            name: 'aloha-docs',
+            version: '1.0.0'
+          }
+        }
+      };
+    }
+
+    // Handle notifications/initialized (sent after initialize response)
+    if (method === 'notifications/initialized') {
+      // No response needed for notifications
+      return null;
+    }
 
     if (method === 'tools/list') {
       return this.listTools(id);
@@ -45,85 +74,71 @@ export class MCPHandler {
       result: {
         tools: [
           {
+            name: 'ping',
+            description: 'Simple test tool that returns server version and status. Use this to verify MCP connection is working.',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+              required: []
+            }
+          },
+          {
+            name: 'list_frameworks',
+            description: 'List all available documentation frameworks/repositories. Returns name, description, document count, and repository info.',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+              required: []
+            }
+          },
+          {
             name: 'search_docs',
-            description: 'Hybrid search with automatic framework detection. Uses BM25 lexical + semantic ranking. Automatically detects framework intent and scopes search for precision, with global fallback.',
+            description: 'Search documentation within a specific framework. Use this when you know which framework to search in (get frameworkId from search_frameworks tool first). Returns relevant documentation pages with titles, descriptions, and URLs.',
             inputSchema: {
               type: 'object',
               properties: {
+                frameworkId: { type: 'string', description: 'Framework ID to search in (get this from search_frameworks or list_frameworks)' },
                 query: { type: 'string', description: 'Search query to find in documentation' },
+                limit: { type: 'number', default: 10, description: 'Maximum number of results to return' }
+              },
+              required: ['frameworkId', 'query']
+            }
+          },
+          {
+            name: 'search_frameworks',
+            description: 'Search for frameworks by name or description. Use this to find available frameworks when user searches for "react", "sample", etc.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: { type: 'string', description: 'Search term to match against framework names and descriptions' }
+              },
+              required: ['query']
+            }
+          },
+          {
+            name: 'search_all',
+            description: 'Search across ALL documentation frameworks at once. Use this when you don\'t know which framework contains the answer, or when searching for general topics across all available documentation. For targeted searches, use search_docs with a specific frameworkId instead.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: { type: 'string', description: 'Search query to find across all documentation' },
                 limit: { type: 'number', default: 10, description: 'Maximum number of results to return' }
               },
               required: ['query']
             }
           },
           {
-            name: 'search_frameworks',
-            description: 'Detect framework/repository candidates from a query. Returns framework probabilities and suggested scoping.',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                query: { type: 'string', description: 'Query to analyze for framework detection' }
-              },
-              required: ['query']
-            }
-          },
-          {
-            name: 'search_detailed',
-            description: 'Advanced search with full metadata including detection confidence, search strategy used, and ranking sources. Useful for debugging or understanding search behavior.',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                query: { type: 'string', description: 'Search query' },
-                limit: { type: 'number', default: 10, description: 'Maximum results' }
-              },
-              required: ['query']
-            }
-          },
-          {
             name: 'get_doc',
-            description: 'Get full content of a specific documentation page by path',
+            description: 'Get full content of a specific documentation page. Use the file path from search results to retrieve the complete markdown content.',
             inputSchema: {
               type: 'object',
               properties: {
-                repositoryId: { type: 'string', description: 'Repository ID' },
-                path: { type: 'string', description: 'Document path (e.g., getting-started.md)' }
+                frameworkId: { type: 'string', description: 'Framework ID (get from search results)' },
+                path: { type: 'string', description: 'Document path (e.g., getting-started.md) - get this from search results' }
               },
-              required: ['repositoryId', 'path']
+              required: ['frameworkId', 'path']
             }
           },
-          {
-            name: 'get_component',
-            description: 'Get component details from custom elements manifest',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                name: { type: 'string', description: 'Component name (e.g., x-button)' }
-              },
-              required: ['name']
-            }
-          },
-          {
-            name: 'get_schema',
-            description: 'Get JSON schema for a component',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                name: { type: 'string', description: 'Schema name' }
-              },
-              required: ['name']
-            }
-          },
-          {
-            name: 'get_token',
-            description: 'Get design token details',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                name: { type: 'string', description: 'Token name' }
-              },
-              required: ['name']
-            }
-          }
         ]
       }
     };
@@ -169,14 +184,60 @@ export class MCPHandler {
     }
   }
   
-  async searchDocs({ query, limit = 10 }) {
-    // Use current scope if set, otherwise search all repos with auto-detection
-    const repositoryId = this.currentScope || null;
-    const results = await this.docsLoader.searchDocuments(query, repositoryId, limit);
+  async ping() {
+    const repos = this.docsLoader.getRepositoryHierarchy();
+    return {
+      status: 'ok',
+      version: '1.0.0',
+      server: 'Aloha Docs MCP Server',
+      timestamp: new Date().toISOString(),
+      frameworks: repos.length,
+      frameworks_list: repos.map(r => r.name)
+    };
+  }
+
+  async listFrameworks() {
+    const repos = this.docsLoader.getRepositoryHierarchy();
+    return {
+      total: repos.length,
+      frameworks: repos.map(repo => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description || 'No description available',
+        url: repo.url,
+        documentCount: repo.documents?.length || 0,
+        validated: repo.validated,
+        type: repo.type
+      }))
+    };
+  }
+
+  async searchDocs({ frameworkId, query, limit = 10 }) {
+    const results = await this.docsLoader.searchDocuments(query, frameworkId, limit);
 
     return {
       query,
-      scope: repositoryId ? `repository: ${repositoryId}` : 'all repositories (auto-detect)',
+      frameworkId,
+      totalResults: results.length,
+      results: results.map(r => ({
+        title: r.title,
+        repository: r.repositoryName,
+        section: r.section,
+        description: r.description,
+        file: r.file,
+        url: `/${r.repositoryId}/${r.file.replace('.md', '')}`,
+        relevanceScore: r.score
+      }))
+    };
+  }
+
+  async searchAll({ query, limit = 10 }) {
+    // Search across all frameworks
+    const results = await this.docsLoader.searchDocuments(query, null, limit);
+
+    return {
+      query,
+      scope: 'all frameworks',
       totalResults: results.length,
       results: results.map(r => ({
         title: r.title,
@@ -191,110 +252,42 @@ export class MCPHandler {
   }
 
   async searchFrameworks({ query }) {
-    // Get framework detector from search engine
-    const detector = this.searchEngine.pipeline.detector;
-    const availableRepos = this.searchEngine.pipeline.getIndexedRepositories();
+    const repos = this.docsLoader.getRepositoryHierarchy();
+    const searchTerm = query.toLowerCase();
 
-    const strategy = detector.getSearchStrategy(query, availableRepos);
-
-    return {
-      query,
-      detected: strategy.primaryRepository !== null,
-      recommendedStrategy: strategy.strategy,
-      confidence: strategy.confidence,
-      primaryFramework: strategy.primaryRepository,
-      topic: strategy.topic,
-      queryExpansions: strategy.queryExpansions,
-      reasoning: strategy.reasoning
-    };
-  }
-
-  async searchDetailed({ query, limit = 10 }) {
-    // Get detailed search results with metadata
-    const repositoryId = this.currentScope || null;
-    const detailedResult = await this.searchEngine.searchDetailed(query, repositoryId, limit);
+    // Filter frameworks that match the search term in name or description
+    const matches = repos.filter(repo => {
+      const name = (repo.name || '').toLowerCase();
+      const description = (repo.description || '').toLowerCase();
+      return name.includes(searchTerm) || description.includes(searchTerm);
+    });
 
     return {
       query,
-      strategy: detailedResult.strategy,
-      primaryRepository: detailedResult.primaryRepository || null,
-      results: detailedResult.results.map(r => ({
-        title: r.title,
-        repository: r.repositoryName,
-        section: r.section,
-        description: r.description,
-        file: r.file,
-        url: `/${r.repositoryId}/${r.file.replace('.md', '')}`,
-        score: r.score,
-        source: r.source
-      })),
-      metadata: detailedResult.metadata
+      total: matches.length,
+      frameworks: matches.map(repo => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description || 'No description available',
+        url: repo.url,
+        documentCount: repo.documents?.length || 0,
+        validated: repo.validated,
+        type: repo.type
+      }))
     };
   }
-  
-  async getComponent({ name }) {
-    const component = this.docsLoader.getComponent(name);
-    
-    if (!component) {
-      throw new Error(`Component ${name} not found`);
-    }
-    
-    return {
-      tag: component.tagName,
-      title: component.title,
-      description: component.description,
-      properties: component.properties || {},
-      events: component.events || [],
-      slots: component.slots || [],
-      cssParts: component.cssParts || [],
-      cssProperties: component.cssProperties || [],
-      examples: component.examples || []
-    };
-  }
-  
-  async getSchema({ name }) {
-    const schema = await this.docsLoader.getSchema(name);
-    if (!schema) {
-      throw new Error(`Schema ${name} not found`);
-    }
-    return schema;
-  }
-  
-  async getToken({ name }) {
-    const tokens = await this.docsLoader.getDesignTokens();
-    const token = this.findToken(tokens, name);
-    
-    if (!token) {
-      throw new Error(`Token ${name} not found`);
-    }
-    
-    return token;
-  }
-  
-  async getDoc({ repositoryId, path }) {
-    const content = await this.docsLoader.loadDocument(repositoryId, path);
+
+  async getDoc({ frameworkId, path }) {
+    const content = await this.docsLoader.loadDocument(frameworkId, path);
     if (!content) {
-      throw new Error(`Document ${path} not found in ${repositoryId}`);
+      throw new Error(`Document ${path} not found in framework ${frameworkId}`);
     }
 
     return {
-      repositoryId,
+      frameworkId,
       path,
       content,
-      url: `/${repositoryId}/${path.replace('.md', '')}`
+      url: `/${frameworkId}/${path.replace('.md', '')}`
     };
-  }
-  
-  findToken(tokens, name) {
-    for (const [key, value] of Object.entries(tokens)) {
-      if (key === name) {
-        return { name: key, value };
-      }
-      if (typeof value === 'object' && value !== null) {
-        const found = this.findToken(value, name);
-        if (found) return found;
-      }
-    }
-    return null;
   }
 }

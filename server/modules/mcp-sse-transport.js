@@ -24,16 +24,32 @@ export class MCPSSETransport {
     // Store client with scope
     this.clients.set(clientId, { res, repositoryId });
 
-    // Send initial connection message
+    // CRITICAL: Send endpoint event first (required by MCP SSE protocol)
+    // This tells the client where to POST messages
+    const messageEndpoint = repositoryId
+      ? `/mcp/message` // For scoped access, client still posts to same endpoint
+      : '/mcp/message';
+
+    console.log('[MCP SSE] Sending endpoint event:', messageEndpoint);
+    this.sendEvent(res, 'endpoint', messageEndpoint);
+
+    // Send connection confirmation
     const message = repositoryId
       ? `Connected to ${repositoryId} MCP Server`
       : 'Connected to Aloha Docs MCP Server';
 
-    this.sendEvent(res, 'connected', {
-      message,
-      clientId,
-      scope: repositoryId
-    });
+    const notification = {
+      jsonrpc: '2.0',
+      method: 'notifications/message',
+      params: {
+        level: 'info',
+        logger: 'aloha-docs',
+        data: message
+      }
+    };
+
+    console.log('[MCP SSE] Sending notification:', JSON.stringify(notification));
+    this.sendEvent(res, 'message', notification);
 
     // Handle client disconnect
     req.on('close', () => {
@@ -48,8 +64,14 @@ export class MCPSSETransport {
         this.clients.delete(clientId);
         return;
       }
-      this.sendEvent(res, 'heartbeat', { timestamp: Date.now() });
-    }, 30000); // Every 30 seconds
+      // Send empty comment as heartbeat (standard SSE practice)
+      try {
+        res.write(':\n\n');
+      } catch (error) {
+        clearInterval(heartbeat);
+        this.clients.delete(clientId);
+      }
+    }, 15000); // Every 15 seconds
 
     // Cleanup on error
     res.on('error', (error) => {
@@ -63,6 +85,8 @@ export class MCPSSETransport {
     try {
       const message = req.body;
 
+      console.log('[MCP SSE] Received POST message:', JSON.stringify(message));
+
       if (!message || typeof message !== 'object') {
         return res.status(400).json({
           error: {
@@ -75,8 +99,15 @@ export class MCPSSETransport {
       // Process MCP request with scope
       const response = await this.mcpHandler.handle(message, repositoryId);
 
-      // Send response
-      res.json(response);
+      console.log('[MCP SSE] Sending response:', JSON.stringify(response));
+
+      // Send response (null for notifications)
+      if (response === null) {
+        // No response for notifications
+        res.status(204).send();
+      } else {
+        res.json(response);
+      }
     } catch (error) {
       console.error('MCP message error:', error);
       res.status(500).json({
@@ -93,7 +124,12 @@ export class MCPSSETransport {
 
     try {
       res.write(`event: ${event}\n`);
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+      // For endpoint event, send as plain string (not JSON)
+      if (event === 'endpoint') {
+        res.write(`data: ${data}\n\n`);
+      } else {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      }
     } catch (error) {
       console.error('Error sending SSE event:', error);
     }

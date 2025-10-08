@@ -4,7 +4,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { config } from './modules/config.js';
 import { MCPHandler } from './modules/mcp-handler.js';
-import { MCPSSETransport } from './modules/mcp-sse-transport.js';
+import { MCPSSESimple } from './modules/mcp-sse-simple.js';
 import { SearchEngine } from './modules/search-engine.js';
 import { apiRouter } from './modules/api-router.js';
 import { RepositoryManager } from './modules/repository-manager.js';
@@ -20,7 +20,7 @@ const repositoryManager = new RepositoryManager();
 const mcpRouter = new MCPRouter();
 const docValidator = new DocValidator();
 const mcpHandler = new MCPHandler(searchEngine, repositoryManager);
-const mcpSSE = new MCPSSETransport(mcpHandler);
+const mcpSSE = new MCPSSESimple(mcpHandler);
 
 // Track WebSocket clients for reload notifications
 const wsClients = new Set();
@@ -36,26 +36,14 @@ app.use('/css', express.static('public/css'));
 app.use('/js', express.static('public/js'));
 app.use('/assets', express.static('public/assets'));
 
-// SSE endpoint for remote MCP access (all repositories)
-app.get('/sse', (req, res) => {
-  mcpSSE.handleConnection(req, res, null);
+// SSE endpoint for remote MCP access
+app.get('/sse', async (req, res) => {
+  await mcpSSE.handleSSE(req, res);
 });
 
-// SSE endpoint for scoped repository access
-app.get('/:repositoryId/sse', (req, res) => {
-  const { repositoryId } = req.params;
-  mcpSSE.handleConnection(req, res, repositoryId);
-});
-
-// MCP message endpoint (for SSE transport)
+// MCP message endpoint for SSE POST requests
 app.post('/mcp/message', async (req, res) => {
-  await mcpSSE.handleMessage(req, res, null);
-});
-
-// MCP message endpoint for scoped repository
-app.post('/:repositoryId/mcp/message', async (req, res) => {
-  const { repositoryId } = req.params;
-  await mcpSSE.handleMessage(req, res, repositoryId);
+  await mcpSSE.handleMessage(req, res);
 });
 
 // Root route - serve marketplace
@@ -137,10 +125,18 @@ async function init() {
   });
 }
 
-// Graceful shutdown
+// Graceful shutdown with timeout
 process.on('SIGINT', () => {
   console.log('\nShutting down gracefully...');
+
+  // Force exit after 2 seconds if server doesn't close
+  const forceExitTimer = setTimeout(() => {
+    console.log('Forcing exit...');
+    process.exit(0);
+  }, 2000);
+
   server.close(() => {
+    clearTimeout(forceExitTimer);
     console.log('Server closed');
     process.exit(0);
   });
