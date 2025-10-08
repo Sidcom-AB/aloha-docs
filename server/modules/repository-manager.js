@@ -2,6 +2,8 @@ import { GitHubLoader } from './github-loader.js';
 import { LocalLoader } from './local-loader.js';
 import { AutoDiscovery } from './auto-discovery.js';
 import { TokenManager } from './token-manager.js';
+import { SearchEngine } from './search-engine.js';
+import { DocumentCache } from './document-cache.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -12,15 +14,21 @@ export class RepositoryManager {
     this.githubLoader = new GitHubLoader(process.env.GITHUB_TOKEN);
     this.localLoader = new LocalLoader();
     this.tokenManager = new TokenManager();
+    this.searchEngine = new SearchEngine();
+    this.documentCache = new DocumentCache();
     this.initialized = false;
   }
 
   async initialize() {
     if (this.initialized) return;
-    
+
     try {
       await this.loadConfiguration();
       await this.validateAllRepositories();
+
+      // Build search index after repositories are validated
+      await this.searchEngine.rebuildIndex(this);
+
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize RepositoryManager:', error);
@@ -147,6 +155,11 @@ export class RepositoryManager {
       if (validation.valid) {
         repo.structure = validation.structure;
         repo.validated = true;
+
+        // Load and cache all documents, then index for search
+        if (this.initialized) {
+          await this.cacheRepositoryDocuments(repo);
+        }
       } else {
         repo.validated = false;
       }
@@ -171,12 +184,80 @@ export class RepositoryManager {
       repo.structure = validation.structure;
       repo.metadata = validation.metadata;
       repo.validated = true;
+
+      // Load and cache all documents, then index for search
+      if (this.initialized) {
+        await this.cacheRepositoryDocuments(repo);
+      }
     } else {
       repo.validated = false;
       repo.validationError = validation.error;
     }
 
     return validation;
+  }
+
+  /**
+   * Load and cache all documents for a repository
+   * This downloads everything once and stores in memory
+   */
+  async cacheRepositoryDocuments(repo) {
+    console.log(`[RepositoryManager] Caching all documents for ${repo.id}...`);
+
+    const categories = repo.structure.categories || [];
+    const files = [];
+
+    // Collect all file paths
+    for (const category of categories) {
+      if (category.items) {
+        for (const item of category.items) {
+          files.push(item.file);
+        }
+      }
+    }
+
+    // Load all documents in parallel
+    const loadPromises = files.map(async (file) => {
+      try {
+        let content;
+
+        if (repo.isLocal) {
+          const fullPath = `${repo.localPath}/${file}`;
+          content = await this.localLoader.loadFile(fullPath);
+        } else {
+          const { owner, repo: repoName, branch, path: basePath } = repo.github;
+          const fullPath = basePath ? `${basePath}/${file}` : file;
+          const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
+          content = await loader.loadFile(owner, repoName, branch, fullPath);
+        }
+
+        return { file, content };
+      } catch (error) {
+        console.error(`[RepositoryManager] Failed to load ${file}:`, error.message);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(loadPromises);
+    const documents = {};
+
+    for (const result of results) {
+      if (result) {
+        documents[result.file] = result.content;
+      }
+    }
+
+    // Store in document cache
+    this.documentCache.batchSet(repo.id, documents);
+
+    // Index for search using cached documents
+    const loadDocFn = async (file) => {
+      return this.documentCache.get(repo.id, file);
+    };
+
+    await this.searchEngine.indexRepository(repo.id, repo.structure, loadDocFn);
+
+    console.log(`[RepositoryManager] Cached ${Object.keys(documents).length} documents for ${repo.id}`);
   }
 
   getRepository(id) {
@@ -251,142 +332,102 @@ export class RepositoryManager {
       throw new Error(`Repository ${repositoryId} is not validated`);
     }
 
-    // Handle local repositories
+    // Try to get from cache first
+    const cached = this.documentCache.get(repositoryId, documentPath);
+    if (cached) {
+      return cached;
+    }
+
+    // If not in cache (shouldn't happen after initialization), load and cache it
+    console.warn(`[RepositoryManager] Document ${documentPath} not in cache for ${repositoryId}, loading...`);
+
+    let content;
     if (repo.isLocal) {
       const fullPath = `${repo.localPath}/${documentPath}`;
-      const content = await this.localLoader.loadFile(fullPath);
-      return content;
+      content = await this.localLoader.loadFile(fullPath);
+    } else {
+      const { owner, repo: repoName, branch, path: basePath } = repo.github;
+      const fullPath = basePath ? `${basePath}/${documentPath}` : documentPath;
+      const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
+      content = await loader.loadFile(owner, repoName, branch, fullPath);
     }
 
-    // Handle GitHub repositories
-    const { owner, repo: repoName, branch, path: basePath } = repo.github;
-    const fullPath = basePath ? `${basePath}/${documentPath}` : documentPath;
-
-    // Use repo-specific token if available
-    const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
-    return await loader.loadFile(owner, repoName, branch, fullPath);
+    // Cache it for next time
+    this.documentCache.set(repositoryId, documentPath, content);
+    return content;
   }
 
-  async searchDocuments(query, repositoryId = null) {
-    const repositories = repositoryId 
-      ? [this.getRepository(repositoryId)]
-      : Array.from(this.repositories.values());
+  async searchDocuments(query, repositoryId = null, limit = 50) {
+    // Use the SearchEngine for fast cached search
+    return this.searchEngine.search(query, repositoryId, limit);
+  }
 
+  /**
+   * Refresh a repository - reload and re-cache all documents
+   * Use this to update docs from GitHub or local changes
+   */
+  async refreshRepository(repositoryId) {
+    const repo = this.getRepository(repositoryId);
+    if (!repo) {
+      throw new Error(`Repository ${repositoryId} not found`);
+    }
+
+    console.log(`[RepositoryManager] Refreshing repository: ${repositoryId}`);
+
+    // Clear old cache and search index
+    this.documentCache.clearRepository(repositoryId);
+    this.searchEngine.removeRepository(repositoryId);
+
+    // Re-validate (which will re-cache and re-index)
+    const validation = await this.validateRepository(repo);
+
+    if (validation.valid) {
+      console.log(`[RepositoryManager] Successfully refreshed ${repositoryId}`);
+      return {
+        success: true,
+        repositoryId,
+        documentCount: this.documentCache.getStats().repositories.find(r => r.id === repositoryId)?.documentCount || 0
+      };
+    } else {
+      throw new Error(`Failed to refresh ${repositoryId}: ${validation.error}`);
+    }
+  }
+
+  /**
+   * Refresh all repositories
+   */
+  async refreshAll() {
+    console.log('[RepositoryManager] Refreshing all repositories...');
+
+    const repoIds = Array.from(this.repositories.keys());
     const results = [];
-    
-    for (const repo of repositories) {
-      if (repo && repo.validated && repo.enabled) {
-        const repoResults = await this.searchInRepository(repo, query);
-        results.push(...repoResults);
-        
-        if (repo.children.size > 0) {
-          const childResults = await this.searchInChildren(repo.children, query);
-          results.push(...childResults);
-        }
+
+    for (const repoId of repoIds) {
+      try {
+        const result = await this.refreshRepository(repoId);
+        results.push(result);
+      } catch (error) {
+        console.error(`[RepositoryManager] Failed to refresh ${repoId}:`, error.message);
+        results.push({
+          success: false,
+          repositoryId: repoId,
+          error: error.message
+        });
       }
     }
 
+    console.log(`[RepositoryManager] Refreshed ${results.filter(r => r.success).length}/${results.length} repositories`);
     return results;
   }
 
-  async searchInChildren(children, query) {
-    const results = [];
-    
-    for (const [_, child] of children) {
-      if (child.validated && child.enabled) {
-        const childResults = await this.searchInRepository(child, query);
-        results.push(...childResults);
-        
-        if (child.children.size > 0) {
-          const grandchildResults = await this.searchInChildren(child.children, query);
-          results.push(...grandchildResults);
-        }
-      }
-    }
-
-    return results;
-  }
-
-  async searchInRepository(repo, query) {
-    const results = [];
-    const queryLower = query.toLowerCase();
-
-    if (!repo.structure || !repo.structure.categories) return results;
-
-    for (const category of repo.structure.categories) {
-      if (category.items) {
-        for (const item of category.items) {
-          let matchFound = false;
-          let excerpt = item.description || '';
-          let score = 0;
-
-          // Search in title and description
-          if (item.title.toLowerCase().includes(queryLower)) {
-            matchFound = true;
-            score = this.calculateSearchScore(item, queryLower);
-          }
-
-          if (item.description && item.description.toLowerCase().includes(queryLower)) {
-            matchFound = true;
-            score = Math.max(score, this.calculateSearchScore(item, queryLower) * 0.8);
-          }
-
-          // Search in actual file content
-          try {
-            const content = await this.loadDocument(repo.id, item.file);
-            const contentLower = content.toLowerCase();
-
-            if (contentLower.includes(queryLower)) {
-              matchFound = true;
-
-              // Extract excerpt around the match
-              const index = contentLower.indexOf(queryLower);
-              const start = Math.max(0, index - 60);
-              const end = Math.min(content.length, index + query.length + 60);
-              excerpt = '...' + content.substring(start, end).replace(/\n/g, ' ') + '...';
-
-              // Content match has lower score than title match
-              if (score === 0) {
-                score = 3;
-              }
-            }
-          } catch (error) {
-            // If we can't load the document, just skip content search
-            console.error(`Failed to load document ${item.file} for search:`, error.message);
-          }
-
-          if (matchFound) {
-            results.push({
-              repositoryId: repo.id,
-              repositoryName: repo.name,
-              section: category.title,
-              title: item.title,
-              description: excerpt,
-              file: item.file,
-              score: score
-            });
-          }
-        }
-      }
-    }
-
-    return results.sort((a, b) => b.score - a.score);
-  }
-
-  calculateSearchScore(item, query) {
-    let score = 0;
-    const titleLower = item.title.toLowerCase();
-    
-    if (titleLower === query) score += 10;
-    else if (titleLower.startsWith(query)) score += 5;
-    else if (titleLower.includes(query)) score += 2;
-    
-    if (item.description) {
-      const descLower = item.description.toLowerCase();
-      if (descLower.includes(query)) score += 1;
-    }
-    
-    return score;
+  /**
+   * Get cache statistics
+   */
+  getCacheStats() {
+    return {
+      documentCache: this.documentCache.getStats(),
+      searchEngine: this.searchEngine.getStats()
+    };
   }
 
   async saveConfiguration() {

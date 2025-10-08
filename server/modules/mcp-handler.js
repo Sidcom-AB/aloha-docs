@@ -2,13 +2,15 @@ export class MCPHandler {
   constructor(searchEngine, docsLoader) {
     this.searchEngine = searchEngine;
     this.docsLoader = docsLoader;
-    
+
     this.tools = {
       search_docs: this.searchDocs.bind(this),
+      search_frameworks: this.searchFrameworks.bind(this),
+      search_detailed: this.searchDetailed.bind(this),
+      get_doc: this.getDoc.bind(this),
       get_component: this.getComponent.bind(this),
       get_schema: this.getSchema.bind(this),
-      get_token: this.getToken.bind(this),
-      get_doc: this.getDoc.bind(this)
+      get_token: this.getToken.bind(this)
     };
   }
   
@@ -44,14 +46,49 @@ export class MCPHandler {
         tools: [
           {
             name: 'search_docs',
-            description: 'Search across all documentation libraries with full-text search. Searches titles, descriptions, and content of all markdown files.',
+            description: 'Hybrid search with automatic framework detection. Uses BM25 lexical + semantic ranking. Automatically detects framework intent and scopes search for precision, with global fallback.',
             inputSchema: {
               type: 'object',
               properties: {
                 query: { type: 'string', description: 'Search query to find in documentation' },
-                limit: { type: 'number', default: 5, description: 'Maximum number of results to return' }
+                limit: { type: 'number', default: 10, description: 'Maximum number of results to return' }
               },
               required: ['query']
+            }
+          },
+          {
+            name: 'search_frameworks',
+            description: 'Detect framework/repository candidates from a query. Returns framework probabilities and suggested scoping.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: { type: 'string', description: 'Query to analyze for framework detection' }
+              },
+              required: ['query']
+            }
+          },
+          {
+            name: 'search_detailed',
+            description: 'Advanced search with full metadata including detection confidence, search strategy used, and ranking sources. Useful for debugging or understanding search behavior.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: { type: 'string', description: 'Search query' },
+                limit: { type: 'number', default: 10, description: 'Maximum results' }
+              },
+              required: ['query']
+            }
+          },
+          {
+            name: 'get_doc',
+            description: 'Get full content of a specific documentation page by path',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                repositoryId: { type: 'string', description: 'Repository ID' },
+                path: { type: 'string', description: 'Document path (e.g., getting-started.md)' }
+              },
+              required: ['repositoryId', 'path']
             }
           },
           {
@@ -85,17 +122,6 @@ export class MCPHandler {
                 name: { type: 'string', description: 'Token name' }
               },
               required: ['name']
-            }
-          },
-          {
-            name: 'get_doc',
-            description: 'Get specific documentation page',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                path: { type: 'string', description: 'Doc path (e.g., components/button)' }
-              },
-              required: ['path']
             }
           }
         ]
@@ -143,22 +169,66 @@ export class MCPHandler {
     }
   }
   
-  async searchDocs({ query, limit = 5 }) {
-    // Use current scope if set, otherwise search all repos
+  async searchDocs({ query, limit = 10 }) {
+    // Use current scope if set, otherwise search all repos with auto-detection
     const repositoryId = this.currentScope || null;
-    const results = await this.docsLoader.searchDocuments(query, repositoryId);
+    const results = await this.docsLoader.searchDocuments(query, repositoryId, limit);
+
     return {
       query,
-      scope: repositoryId ? `repository: ${repositoryId}` : 'all repositories',
+      scope: repositoryId ? `repository: ${repositoryId}` : 'all repositories (auto-detect)',
       totalResults: results.length,
-      results: results.slice(0, limit).map(r => ({
+      results: results.map(r => ({
         title: r.title,
         repository: r.repositoryName,
         section: r.section,
         description: r.description,
         file: r.file,
-        score: r.score
+        url: `/${r.repositoryId}/${r.file.replace('.md', '')}`,
+        relevanceScore: r.score
       }))
+    };
+  }
+
+  async searchFrameworks({ query }) {
+    // Get framework detector from search engine
+    const detector = this.searchEngine.pipeline.detector;
+    const availableRepos = this.searchEngine.pipeline.getIndexedRepositories();
+
+    const strategy = detector.getSearchStrategy(query, availableRepos);
+
+    return {
+      query,
+      detected: strategy.primaryRepository !== null,
+      recommendedStrategy: strategy.strategy,
+      confidence: strategy.confidence,
+      primaryFramework: strategy.primaryRepository,
+      topic: strategy.topic,
+      queryExpansions: strategy.queryExpansions,
+      reasoning: strategy.reasoning
+    };
+  }
+
+  async searchDetailed({ query, limit = 10 }) {
+    // Get detailed search results with metadata
+    const repositoryId = this.currentScope || null;
+    const detailedResult = await this.searchEngine.searchDetailed(query, repositoryId, limit);
+
+    return {
+      query,
+      strategy: detailedResult.strategy,
+      primaryRepository: detailedResult.primaryRepository || null,
+      results: detailedResult.results.map(r => ({
+        title: r.title,
+        repository: r.repositoryName,
+        section: r.section,
+        description: r.description,
+        file: r.file,
+        url: `/${r.repositoryId}/${r.file.replace('.md', '')}`,
+        score: r.score,
+        source: r.source
+      })),
+      metadata: detailedResult.metadata
     };
   }
   
@@ -201,12 +271,18 @@ export class MCPHandler {
     return token;
   }
   
-  async getDoc({ path }) {
-    const doc = await this.docsLoader.getDoc(path);
-    if (!doc) {
-      throw new Error(`Document ${path} not found`);
+  async getDoc({ repositoryId, path }) {
+    const content = await this.docsLoader.loadDocument(repositoryId, path);
+    if (!content) {
+      throw new Error(`Document ${path} not found in ${repositoryId}`);
     }
-    return doc;
+
+    return {
+      repositoryId,
+      path,
+      content,
+      url: `/${repositoryId}/${path.replace('.md', '')}`
+    };
   }
   
   findToken(tokens, name) {

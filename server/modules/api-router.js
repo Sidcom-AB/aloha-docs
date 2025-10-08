@@ -13,9 +13,9 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
         return res.status(400).json({ error: 'Query is required' });
       }
 
-      // Use repository manager for both single-repo and cross-repo search
-      const results = await repositoryManager.searchDocuments(query, repositoryId);
-      res.json({ results: results.slice(0, limit) });
+      // Use repository manager (which uses SearchEngine for fast cached search)
+      const results = await repositoryManager.searchDocuments(query, repositoryId, limit);
+      res.json({ results });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -228,6 +228,40 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
       res.status(400).json({ error: error.message });
     }
   });
-  
+
+  // Refresh repository cache
+  router.post('/repos/:id/refresh', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await repositoryManager.refreshRepository(id);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Refresh all repositories
+  router.post('/repos/refresh-all', async (req, res) => {
+    try {
+      const results = await repositoryManager.refreshAll();
+      res.json({
+        success: true,
+        results
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get cache statistics
+  router.get('/cache/stats', async (req, res) => {
+    try {
+      const stats = repositoryManager.getCacheStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return router;
 }
