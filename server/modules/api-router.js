@@ -1,10 +1,29 @@
 import { Router } from 'express';
 import { GitHubDiscovery } from './github-discovery.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
   const router = Router();
   const discovery = new GitHubDiscovery(process.env.GITHUB_TOKEN);
   
+  // Get server configuration
+  router.get('/config', (req, res) => {
+    try {
+      const host = process.env.ALOHA_HOST || `http://localhost:${process.env.PORT || 3000}`;
+      res.json({
+        host,
+        port: process.env.PORT || 3000
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   router.post('/search', async (req, res) => {
     try {
       const { query, limit = 5, repositoryId = null } = req.body;
@@ -260,6 +279,36 @@ export function apiRouter(searchEngine, repositoryManager, mcpRouter) {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Installation templates endpoints
+  router.get('/templates', async (req, res) => {
+    try {
+      const templatesDir = path.join(__dirname, '../../install_templates');
+      const files = await fs.readdir(templatesDir);
+      const templates = files
+        .filter(f => f.endsWith('.md'))
+        .map(f => ({
+          id: f.replace('.md', ''),
+          name: f.replace('.md', '').replace(/-/g, ' '),
+          filename: f
+        }));
+      res.json({ templates });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.get('/templates/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const templatesDir = path.join(__dirname, '../../install_templates');
+      const templatePath = path.join(templatesDir, `${id}.md`);
+      const content = await fs.readFile(templatePath, 'utf-8');
+      res.json({ id, content });
+    } catch (error) {
+      res.status(404).json({ error: 'Template not found' });
     }
   });
 

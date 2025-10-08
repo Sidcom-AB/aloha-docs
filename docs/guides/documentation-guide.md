@@ -384,7 +384,7 @@ cd aloha-docs
 npm start
 
 # Add your repo via web interface
-http://localhost:3000/#add
+%%ALOHA_HOST%%/#add
 ```
 
 ### Validation Endpoint
@@ -392,31 +392,34 @@ http://localhost:3000/#add
 Check documentation quality:
 
 ```bash
-curl -X POST http://localhost:3000/api/discover \
+curl -X POST %%ALOHA_HOST%%/api/discover \
   -H "Content-Type: application/json" \
   -d '{"url":"https://github.com/your-username/your-repo"}'
 ```
 
-## Using AI to Convert Documentation
+## Using AI to Write Documentation
 
-### Step 1: Download the Standard
+You can use AI assistants connected to Aloha Docs via MCP to help write and improve your documentation.
 
-Visit the How To page and download `aloha-standard.md`.
+### Step 1: Connect AI to Aloha
 
-### Step 2: Ask AI to Convert
+Follow the [MCP Usage Guide](./mcp-usage.md) to connect your AI assistant to Aloha Docs.
+
+### Step 2: Ask AI for Help
 
 ```
-Read the aloha-standard.md file and convert my existing documentation
-to follow the Aloha format. My current docs are in [describe structure].
+Read the Aloha documentation guide and help me write documentation for my
+component library. I need to document a Button component with properties,
+events, and examples.
 ```
 
 ### Step 3: Review and Commit
 
-Review AI-generated structure and commit:
+Review AI-generated documentation and commit:
 
 ```bash
 git add docs/
-git commit -m "docs: migrate to Aloha standard"
+git commit -m "docs: add Button component documentation"
 git push
 ```
 
@@ -427,5 +430,5 @@ See Aloha Docs' own documentation for a complete example:
 
 ## Next Steps
 
+- [What is Aloha Docs](./what-is-aloha.md) - Learn more about Aloha
 - [MCP Usage Guide](./mcp-usage.md) - Use with AI assistants
-- [Migration Guide](./migration.md) - Convert existing docs

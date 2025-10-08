@@ -11,9 +11,11 @@ export default {
         <div id="homeSearch"></div>
       </div>
 
-      <div class="container" style="max-width: 800px;">
-        <!-- MCP Quick Add Widget -->
-        <div id="homeMcpWidget"></div>
+      <div class="container" style="max-width: 600px; text-align: center; margin: 3rem auto;">
+        <a href="#howto" class="hero-cta">
+          <i class="fas fa-rocket"></i>
+          <span>Get Started with AI Integration</span>
+        </a>
       </div>
     `;
   },
@@ -29,13 +31,6 @@ export default {
         // Navigate to the document
         window.location.href = `/${result.repositoryId}/${result.file.replace('.md', '')}`;
       }
-    });
-
-    // Initialize MCP widget
-    const { MCPWidget } = await import('/js/components/mcp-widget.js');
-    this.mcpWidget = new MCPWidget('homeMcpWidget', {
-      repositoryId: null, // All repositories
-      compact: false
     });
   },
 

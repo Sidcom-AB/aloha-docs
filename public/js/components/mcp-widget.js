@@ -1,4 +1,4 @@
-// Reusable MCP Configuration Widget
+// Reusable MCP Configuration Widget - now using the new install guide component
 export class MCPWidget {
   constructor(containerId, options = {}) {
     this.container = document.getElementById(containerId);
@@ -15,48 +15,22 @@ export class MCPWidget {
     this.render();
   }
 
-  getSseUrl() {
-    if (this.repositoryId) {
-      return `${this.baseUrl}/${this.repositoryId}/sse`;
-    }
-    return `${this.baseUrl}/sse`;
-  }
-
-  getServerName() {
-    if (this.repositoryId) {
-      return `aloha-docs-${this.repositoryId}`;
-    }
-    return 'aloha-docs';
-  }
-
-  getDescription() {
-    if (this.repositoryId) {
-      return `MCP server for ${this.repositoryName} documentation`;
-    }
-    return 'MCP server for all Aloha documentation frameworks';
-  }
-
-  getConfig() {
-    return {
-      "mcpServers": {
-        [this.getServerName()]: {
-          "command": "npx",
-          "args": ["-y", "mcp-remote", this.getSseUrl()]
-        }
-      }
-    };
-  }
-
   render() {
-    const config = this.getConfig();
-    const configJson = JSON.stringify(config, null, 2);
+    // Load the mcp-install-guide web component script if not already loaded
+    if (!customElements.get('mcp-install-guide')) {
+      const script = document.createElement('script');
+      script.src = '/js/mcp-install-guide.js?v=' + Date.now();
+      script.type = 'module';
+      document.head.appendChild(script);
+    }
 
     if (this.compact) {
+      // Compact mode - show button that opens modal with install guide
       this.container.innerHTML = `
         <div class="mcp-widget-compact">
           <button class="mcp-add-button" id="${this.container.id}-add">
             <i class="fas fa-robot"></i>
-            <span>Add to Claude Desktop</span>
+            <span>Add to AI Assistant</span>
           </button>
           <div class="mcp-config-modal" id="${this.container.id}-modal" style="display: none;">
             <div class="mcp-config-modal-backdrop"></div>
@@ -64,51 +38,33 @@ export class MCPWidget {
               <div class="mcp-config-modal-header">
                 <h3>
                   <i class="fas fa-robot"></i>
-                  ${this.repositoryId ? `Add ${this.repositoryName} to Claude` : 'Add to Claude Desktop'}
+                  ${this.repositoryId ? `Add ${this.repositoryName} MCP` : 'Add Aloha Docs MCP'}
                 </h3>
                 <button class="mcp-config-modal-close" id="${this.container.id}-close">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
               <div class="mcp-config-modal-body">
-                <p style="margin-bottom: 1rem; color: var(--color-text-muted); font-size: 0.9rem;">
-                  ${this.getDescription()}. Add this configuration to your <code>claude_desktop_config.json</code>:
-                </p>
-                <div class="mcp-config-code">
-                  <button class="mcp-copy-button" id="${this.container.id}-copy">
-                    <i class="fas fa-copy"></i> Copy
-                  </button>
-                  <pre><code>${this.escapeHtml(configJson)}</code></pre>
-                </div>
-                <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--color-text-muted); text-align: center;">
-                  <a href="#howto" style="color: var(--color-accent);">Full setup guide</a>
-                </p>
+                <mcp-install-guide
+                  framework-id="${this.repositoryId || 'aloha-docs'}"
+                  framework-name="${this.repositoryName}"
+                  server-url="${this.baseUrl}"
+                  ${!this.repositoryId ? 'root-context' : ''}
+                ></mcp-install-guide>
               </div>
             </div>
           </div>
         </div>
       `;
     } else {
+      // Full mode - show install guide inline
       this.container.innerHTML = `
-        <div class="mcp-widget">
-          <div class="mcp-widget-header">
-            <div class="mcp-widget-icon">🤖</div>
-            <div class="mcp-widget-title">
-              <strong>${this.repositoryId ? `Connect ${this.repositoryName} with AI` : 'Connect with AI Assistants via MCP'}</strong>
-              <p>${this.repositoryId ? 'Add this documentation to Claude Desktop' : 'Add to Claude Desktop in one line - no API keys needed!'}</p>
-            </div>
-          </div>
-          <div class="mcp-config-code">
-            <button class="mcp-copy-button" id="${this.container.id}-copy">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-            <pre><code>${this.escapeHtml(configJson)}</code></pre>
-          </div>
-          <p class="mcp-widget-footer">
-            Add to <code>claude_desktop_config.json</code> •
-            <a href="#howto">Full setup guide</a>
-          </p>
-        </div>
+        <mcp-install-guide
+          framework-id="${this.repositoryId || 'aloha-docs'}"
+          framework-name="${this.repositoryName}"
+          server-url="${this.baseUrl}"
+          ${!this.repositoryId ? 'root-context' : ''}
+        ></mcp-install-guide>
       `;
     }
 
@@ -117,116 +73,16 @@ export class MCPWidget {
       this.addStyles();
     }
 
-    // Attach event listeners
-    this.attachEventListeners();
+    // Attach event listeners for compact mode
+    if (this.compact) {
+      this.attachEventListeners();
+    }
   }
 
   addStyles() {
     const style = document.createElement('style');
     style.id = 'mcp-widget-styles';
     style.textContent = `
-      /* Full Widget */
-      .mcp-widget {
-        margin: 2rem auto;
-        padding: 1.5rem;
-        background: rgba(255, 149, 0, 0.1);
-        border: 2px solid var(--color-accent);
-        border-radius: 12px;
-      }
-
-      .mcp-widget-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .mcp-widget-icon {
-        font-size: 2rem;
-        line-height: 1;
-      }
-
-      .mcp-widget-title {
-        flex: 1;
-      }
-
-      .mcp-widget-title strong {
-        color: var(--color-accent);
-        font-size: 1.1rem;
-        display: block;
-      }
-
-      .mcp-widget-title p {
-        margin: 0.25rem 0 0 0;
-        font-size: 0.9rem;
-        color: var(--color-text-muted);
-      }
-
-      .mcp-config-code {
-        background: var(--bg-secondary);
-        padding: 1rem;
-        border-radius: 8px;
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-        position: relative;
-        border: 1px solid var(--border-dark);
-      }
-
-      .mcp-config-code pre {
-        margin: 0;
-        overflow-x: auto;
-        padding-right: 5rem;
-      }
-
-      .mcp-config-code code {
-        color: var(--color-text-light);
-        display: block;
-        white-space: pre;
-        text-align: left;
-      }
-
-      .mcp-copy-button {
-        position: absolute;
-        right: 0.5rem;
-        top: 0.5rem;
-        background: var(--color-accent);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .mcp-copy-button:hover {
-        background: var(--color-accent-hover);
-        transform: translateY(-1px);
-      }
-
-      .mcp-copy-button:active {
-        transform: translateY(0);
-      }
-
-      .mcp-widget-footer {
-        margin-top: 0.75rem;
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        text-align: center;
-      }
-
-      .mcp-widget-footer a {
-        color: var(--color-accent);
-        text-decoration: none;
-      }
-
-      .mcp-widget-footer a:hover {
-        text-decoration: underline;
-      }
-
       /* Compact Widget */
       .mcp-widget-compact {
         position: relative;
@@ -261,7 +117,7 @@ export class MCPWidget {
         font-size: 1.1rem;
       }
 
-      /* Modal */
+      /* Modal - FIXED positioning for better visibility */
       .mcp-config-modal {
         position: fixed;
         top: 0;
@@ -272,7 +128,7 @@ export class MCPWidget {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem;
+        padding: 1rem;
       }
 
       .mcp-config-modal-backdrop {
@@ -291,8 +147,10 @@ export class MCPWidget {
         backdrop-filter: blur(10px);
         border: 1px solid var(--border-dark);
         border-radius: 12px;
-        max-width: 600px;
+        max-width: 700px;
         width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         animation: modalSlideIn 0.3s ease-out;
       }
@@ -314,6 +172,11 @@ export class MCPWidget {
         justify-content: space-between;
         padding: 1.5rem;
         border-bottom: 1px solid var(--border-dark);
+        position: sticky;
+        top: 0;
+        background: rgba(30, 33, 57, 0.98);
+        backdrop-filter: blur(10px);
+        z-index: 1;
       }
 
       .mcp-config-modal-header h3 {
@@ -338,6 +201,7 @@ export class MCPWidget {
         padding: 0.5rem;
         line-height: 1;
         transition: color 0.2s;
+        flex-shrink: 0;
       }
 
       .mcp-config-modal-close:hover {
@@ -348,51 +212,39 @@ export class MCPWidget {
         padding: 1.5rem;
       }
 
-      /* Scrollbar for modal code */
-      .mcp-config-modal .mcp-config-code pre {
-        max-height: 300px;
-        overflow-y: auto;
+      /* Scrollbar for modal */
+      .mcp-config-modal-content::-webkit-scrollbar {
+        width: 10px;
       }
 
-      .mcp-config-modal .mcp-config-code pre::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-
-      .mcp-config-modal .mcp-config-code pre::-webkit-scrollbar-track {
+      .mcp-config-modal-content::-webkit-scrollbar-track {
         background: rgba(10, 14, 39, 0.5);
-        border-radius: 4px;
+        border-radius: 10px;
       }
 
-      .mcp-config-modal .mcp-config-code pre::-webkit-scrollbar-thumb {
+      .mcp-config-modal-content::-webkit-scrollbar-thumb {
         background: rgba(255, 149, 0, 0.3);
-        border-radius: 4px;
+        border-radius: 10px;
       }
 
-      .mcp-config-modal .mcp-config-code pre::-webkit-scrollbar-thumb:hover {
+      .mcp-config-modal-content::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 149, 0, 0.5);
+      }
+
+      /* Override install guide styles when in modal */
+      .mcp-config-modal-body .install-guide {
+        margin: 0;
+        background: transparent;
+        border: none;
+        padding: 0;
       }
     `;
     document.head.appendChild(style);
   }
 
   attachEventListeners() {
-    // Copy button
-    const copyButton = document.getElementById(`${this.container.id}-copy`);
-    if (copyButton) {
-      copyButton.addEventListener('click', () => {
-        const config = JSON.stringify(this.getConfig(), null, 2);
-        navigator.clipboard.writeText(config).then(() => {
-          copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
-          setTimeout(() => {
-            copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy';
-          }, 2000);
-        });
-      });
-    }
-
-    // Modal controls (for compact mode)
-    if (this.compact) {
+    // Wait for DOM to be ready
+    setTimeout(() => {
       const addButton = document.getElementById(`${this.container.id}-add`);
       const modal = document.getElementById(`${this.container.id}-modal`);
       const closeButton = document.getElementById(`${this.container.id}-close`);
@@ -426,13 +278,7 @@ export class MCPWidget {
           }
         });
       }
-    }
-  }
-
-  escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    }, 100);
   }
 
   destroy() {

@@ -31,8 +31,15 @@ export class LocalLoader {
     const fullPath = path.join(this.projectRoot, localPath);
 
     try {
-      const content = await fs.readFile(fullPath, 'utf-8');
-      return content;
+      const [content, stats] = await Promise.all([
+        fs.readFile(fullPath, 'utf-8'),
+        fs.stat(fullPath)
+      ]);
+
+      return {
+        content,
+        mtime: stats.mtimeMs
+      };
     } catch (error) {
       throw new Error(`Failed to load file ${localPath}: ${error.message}`);
     }

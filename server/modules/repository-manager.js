@@ -388,29 +388,68 @@ export class RepositoryManager {
       throw new Error(`Repository ${repositoryId} is not validated`);
     }
 
-    // Try to get from cache first
+    // For local repos, check if file has been modified
+    if (repo.isLocal) {
+      const cached = this.documentCache.get(repositoryId, documentPath);
+      const cachedMetadata = this.documentCache.getMetadata(repositoryId, documentPath);
+
+      if (cached && cachedMetadata) {
+        // Check file modification time
+        const fullPath = path.join(this.localLoader.projectRoot, repo.localPath, documentPath);
+
+        try {
+          const stats = await fs.stat(fullPath);
+
+          // If file mtime matches cache, return cached content
+          if (cachedMetadata.mtime && stats.mtimeMs <= cachedMetadata.mtime) {
+            return this.replaceAlohaVariables(cached);
+          }
+
+          // File has been modified, reload it
+          console.log(`[RepositoryManager] File ${documentPath} modified, reloading...`);
+        } catch (error) {
+          // File might not exist anymore, return cached if we have it
+          if (cached) {
+            return this.replaceAlohaVariables(cached);
+          }
+        }
+      }
+
+      // Load fresh content from local file
+      const fullPath = `${repo.localPath}/${documentPath}`;
+      const { content, mtime } = await this.localLoader.loadFile(fullPath);
+
+      // Cache with mtime
+      this.documentCache.set(repositoryId, documentPath, content, { mtime });
+
+      // Replace variables before returning
+      return this.replaceAlohaVariables(content);
+    }
+
+    // For GitHub repos, use regular cache (no mtime check)
     const cached = this.documentCache.get(repositoryId, documentPath);
     if (cached) {
-      return cached;
+      return this.replaceAlohaVariables(cached);
     }
 
-    // If not in cache (shouldn't happen after initialization), load and cache it
+    // Load from GitHub
     console.warn(`[RepositoryManager] Document ${documentPath} not in cache for ${repositoryId}, loading...`);
+    const { owner, repo: repoName, branch, path: basePath } = repo.github;
+    const fullPath = basePath ? `${basePath}/${documentPath}` : documentPath;
+    const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
+    const content = await loader.loadFile(owner, repoName, branch, fullPath);
 
-    let content;
-    if (repo.isLocal) {
-      const fullPath = `${repo.localPath}/${documentPath}`;
-      content = await this.localLoader.loadFile(fullPath);
-    } else {
-      const { owner, repo: repoName, branch, path: basePath } = repo.github;
-      const fullPath = basePath ? `${basePath}/${documentPath}` : documentPath;
-      const loader = repo.token ? new GitHubLoader(repo.token) : this.githubLoader;
-      content = await loader.loadFile(owner, repoName, branch, fullPath);
-    }
-
-    // Cache it for next time
+    // Cache content
     this.documentCache.set(repositoryId, documentPath, content);
-    return content;
+
+    // Replace variables before returning
+    return this.replaceAlohaVariables(content);
+  }
+
+  replaceAlohaVariables(content) {
+    // Replace %%ALOHA_HOST%% with actual host
+    const host = process.env.ALOHA_HOST || `http://localhost:${process.env.PORT || 3000}`;
+    return content.replace(/%%ALOHA_HOST%%/g, host);
   }
 
   async searchDocuments(query, repositoryId = null, limit = 50) {
